@@ -19,6 +19,9 @@ use Time::HiRes qw(time);
 
 our $VERSION = "0.01";
 
+use constant MAX_REQUEST_SIZE => 131072;
+use constant CHUNKSIZE        => 64 * 1024;
+
 my $null_io = do { open my $io, "<", \""; $io };
 my $bad_response = [ 400, [ 'Content-Type' => 'text/plain', 'Connection' => 'close' ], [ 'Bad Request' ] ];
 my $have_accept4 = eval {
@@ -212,18 +215,21 @@ sub run {
             };
             
             local $SIG{PIPE} = 'IGNORE';
-            my $do_accept = sub {
-                my ($conn,$peer);
-                if ( $have_accept4 ) {
-                    $peer = Linux::Socket::Accept4::accept4(
-                        $conn, $self->{listen_sock}, $have_accept4);
-                }
-                else {
-                    $peer = accept($conn,$self->{listen_sock});
+            my $do_accept;
+            if ( $have_accept4 ) {
+                $do_accept = sub {
+                    my $peer = Linux::Socket::Accept4::accept4(
+                        my $conn, $self->{listen_sock}, $have_accept4);
+                    ($conn, $peer);
+                };
+            }
+            else {
+                $do_accept = sub {
+                    my $peer = accept(my $conn,$self->{listen_sock});
                     fh_nonblocking($conn,1) if $peer;
-                }
-                return ($conn, $peer);
-            };
+                    ($conn, $peer);
+                };
+            }
             
             while ( $proc_req_count < $max_reqs_per_child) {
                 if ( my ($conn, $peer) = $do_accept->() ) {
@@ -380,7 +386,7 @@ sub handle_connection {
                 $env->{CONTENT_LENGTH} = $length;
                 $env->{'psgi.input'} = $buffer->rewind;
             } else {
-                if ( $buf =~ m!^(?:GET|HEAD)! ) { #pipeline
+                if ( $buf && $buf =~ m!^(?:GET|HEAD)! ) { #pipeline
                     $pipelined_buf = $buf;
                     $use_keepalive = 1; #force keepalive
                 } # else clear buffer
@@ -464,7 +470,7 @@ sub _handle_response {
                 || defined $send_headers{'transfer-encoding'}) {
                 # ok
             }
-            elsif ( ! Plack::Util::status_with_no_entity_body($status_code)
+            elsif ( !($status_code < 200 || $status_code == 204 || $status_code == 304)
                     && defined(my $cl = Plack::Util::content_length($body))) {
                 push @lines, "Content-Length: $cl\015\012";
             }
@@ -479,7 +485,7 @@ sub _handle_response {
         if (defined $send_headers{'content-length'}
                 || defined $send_headers{'transfer-encoding'}) {
             # ok
-        } elsif ( !Plack::Util::status_with_no_entity_body($status_code) ) {
+        } elsif ( !($status_code < 200 || $status_code == 204 || $status_code == 304) ) {
             push @lines, "Transfer-Encoding: chunked\015\012";
             $use_chunked = 1;
         }
