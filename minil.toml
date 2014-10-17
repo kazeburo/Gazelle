@@ -1,0 +1,6 @@
+name = "Plack-Handler-Chobi"
+# badges = ["travis"]
+authority="cpan:KAZEBURO"
+
+module_maker="ModuleBuildTiny"
+
