@@ -133,6 +133,7 @@ sub new {
         max_workers          => $max_workers,
         keepalive_timeout    => $args{keepalive_timeout} || 10,
         disable_keepalive    => (exists $args{keepalive} && !$args{keepalive}) ? 1 : 0,
+        disable_date_header  => (exists $args{date_header} && !$args{date_header}) ? 1 : 0,
         min_reqs_per_child   => (
             defined $args{min_reqs_per_child}
                 ? $args{min_reqs_per_child} : undef,
@@ -456,7 +457,7 @@ sub _handle_response {
         }
     }
 
-    if ( ! exists $send_headers{date} ) {
+    if ( !$self->{disable_date_header} && ! exists $send_headers{date} ) {
         my @lt = gmtime();
         unshift @lines, sprintf("Date: %s, %02d %s %04d %02d:%02d:%02d GMT\015\012",
                                 $DoW[$lt[6]], $lt[3], $MoY[$lt[4]], $lt[5]+1900, $lt[2], $lt[1], $lt[0]);
