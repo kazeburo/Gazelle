@@ -613,7 +613,15 @@ Plack::Handler::Chobi - Starlet for performance freaks
 
 =head1 DESCRIPTION
 
-Plack::Handler::Chobi is a PSGI Handler.
+Plack::Handler::Chobi is a PSGI Handler based on Starlet code.
+
+Chobi is optimized Starlet for performance.
+
+=head1 LICENSE of Starlet 
+
+This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
+
+See L<http://www.perl.com/perl/misc/Artistic.html>
 
 =head1 LICENSE
 

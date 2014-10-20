@@ -65,13 +65,13 @@
    "release_status" : "unstable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/kazeburo/Chobi-experimental/issues"
+         "web" : "https://github.com/kazeburo/Chobi/issues"
       },
-      "homepage" : "https://github.com/kazeburo/Chobi-experimental",
+      "homepage" : "https://github.com/kazeburo/Chobi",
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/kazeburo/Chobi-experimental.git",
-         "web" : "https://github.com/kazeburo/Chobi-experimental"
+         "url" : "git://github.com/kazeburo/Chobi.git",
+         "web" : "https://github.com/kazeburo/Chobi"
       }
    },
    "version" : "0.01",
