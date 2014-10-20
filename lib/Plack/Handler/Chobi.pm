@@ -24,10 +24,6 @@ use constant CHUNKSIZE        => 64 * 1024;
 
 my $null_io = do { open my $io, "<", \""; $io };
 my $bad_response = [ 400, [ 'Content-Type' => 'text/plain', 'Connection' => 'close' ], [ 'Bad Request' ] ];
-my $have_accept4 = eval {
-    require Linux::Socket::Accept4;
-    Linux::Socket::Accept4::SOCK_CLOEXEC()|Linux::Socket::Accept4::SOCK_NONBLOCK();
-};
 
 my $TRUE = Plack::Util::TRUE;
 my $FALSE = Plack::Util::FALSE;
@@ -216,24 +212,10 @@ sub run {
             };
             
             local $SIG{PIPE} = 'IGNORE';
-            my $do_accept;
-            if ( $have_accept4 ) {
-                $do_accept = sub {
-                    my $peer = Linux::Socket::Accept4::accept4(
-                        my $conn, $self->{listen_sock}, $have_accept4);
-                    ($conn, $peer);
-                };
-            }
-            else {
-                $do_accept = sub {
-                    my $peer = accept(my $conn,$self->{listen_sock});
-                    fh_nonblocking($conn,1) if $peer;
-                    ($conn, $peer);
-                };
-            }
             
             while ( $proc_req_count < $max_reqs_per_child) {
-                if ( my ($conn, $peer) = $do_accept->() ) {
+                if ( my $peer = accept(my $conn,$self->{listen_sock})  ) {
+                    fh_nonblocking($conn,1);
                     my ($peerport, $peerhost, $peeraddr) = (0, undef, undef);
                     if ($self->{_listen_sock_is_tcp}) {
                         setsockopt($conn, IPPROTO_TCP, TCP_NODELAY, 1)
