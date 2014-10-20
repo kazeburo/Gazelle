@@ -1,14 +1,15 @@
 # NAME
 
-Plack::Handler::Chobi - It's new $module
+Plack::Handler::Chobi - Starlet for performance freaks
 
 # SYNOPSIS
 
-    use Plack::Handler::Chobi;
+    $ plackup -s Chobi --port 5003 --max-reqs-per-child 50000 \
+         -E production -a app.psgi
 
 # DESCRIPTION
 
-Plack::Handler::Chobi is ...
+Plack::Handler::Chobi is a PSGI Handler.
 
 # LICENSE
 

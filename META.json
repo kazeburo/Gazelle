@@ -1,5 +1,5 @@
 {
-   "abstract" : "It's new $module",
+   "abstract" : "Starlet for performance freaks",
    "author" : [
       "Masahiro Nagano <kazeburo@gmail.com>"
    ],
@@ -42,16 +42,38 @@
       },
       "runtime" : {
          "requires" : {
+            "AnyEvent" : "0",
+            "HTTP::Parser::XS" : "0",
+            "Parallel::Prefork" : "0",
+            "Plack" : "0",
+            "Server::Starter" : "0",
+            "Stream::Buffered" : "0",
+            "Time::HiRes" : "0",
+            "Try::Tiny" : "0",
             "perl" : "5.008005"
          }
       },
       "test" : {
          "requires" : {
+            "HTTP::Request::Common" : "0",
+            "Plack::Test" : "0",
+            "Plack::Test::Suite" : "0",
             "Test::More" : "0.98"
          }
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/kazeburo/Chobi-experimental/issues"
+      },
+      "homepage" : "https://github.com/kazeburo/Chobi-experimental",
+      "repository" : {
+         "type" : "git",
+         "url" : "git://github.com/kazeburo/Chobi-experimental.git",
+         "web" : "https://github.com/kazeburo/Chobi-experimental"
+      }
+   },
    "version" : "0.01",
    "x_authority" : "cpan:KAZEBURO"
 }

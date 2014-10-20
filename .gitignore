@@ -9,6 +9,7 @@
 /local/
 
 nytprof.out
+nytprof.out.*
 nytprof/
 
 cover_db/
