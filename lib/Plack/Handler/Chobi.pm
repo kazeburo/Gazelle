@@ -24,6 +24,7 @@ use constant CHUNKSIZE        => 64 * 1024;
 
 my $null_io = do { open my $io, "<", \""; $io };
 my $bad_response = [ 400, [ 'Content-Type' => 'text/plain', 'Connection' => 'close' ], [ 'Bad Request' ] ];
+my $psgi_version = [1,1];
 
 my $TRUE = Plack::Util::TRUE;
 my $FALSE = Plack::Util::FALSE;
@@ -194,13 +195,12 @@ sub run {
                 $self->{max_reqs_per_child},
                 $self->{min_reqs_per_child}
             );
-            my $stderr = *STDERR;
-            my $psgi_version = [1,1];
-            my $server_port = $self->{port} || 0;
-            my $server_host = $self->{host} || 0;
 
             my $keepalive;
             my $may_keepalive;
+            my $stderr = *STDERR;
+            my $server_port = $self->{port} || 0;
+            my $server_host = $self->{host} || 0;
 
             my $proc_req_count = 0;
             $self->{can_exit} = 1;
@@ -231,7 +231,6 @@ sub run {
                         my $env = {
                             'REMOTE_ADDR'  => $peeraddr,
                             'REMOTE_PORT'  => $peerport,
-                            'psgix.io'     => $conn,
                             'SERVER_PORT'  => $server_port,
                             'SERVER_NAME'  => $server_host,
                             'SCRIPT_NAME'  => '',
@@ -605,7 +604,7 @@ __END__
 
 =head1 NAME
 
-Plack::Handler::Chobi - radically optimized Starlet
+Plack::Handler::Chobi - Starlet for performance freaks
 
 =head1 SYNOPSIS
 
@@ -614,7 +613,7 @@ Plack::Handler::Chobi - radically optimized Starlet
 
 =head1 DESCRIPTION
 
-Plack::Handler::Chobi is ...
+Plack::Handler::Chobi is a PSGI Handler.
 
 =head1 LICENSE
 
