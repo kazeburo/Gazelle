@@ -13,7 +13,6 @@ use POSIX qw(EINTR EAGAIN EWOULDBLOCK);
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Parallel::Prefork;
 use Server::Starter ();
-#use AnyEvent::Util qw/fh_nonblocking/;
 use Try::Tiny;
 use Time::HiRes qw(time);
 use IO::Vectored;
@@ -210,16 +209,10 @@ sub run {
             };
             
             local $SIG{PIPE} = 'IGNORE';
-            my $accept = sub {
-                use open 'IO' => ':unix';
-                my $peer = accept4(my $conn,$self->{listen_sock},SOCK_CLOEXEC|SOCK_NONBLOCK);
-                #fh_nonblocking($conn,1);
-                return ($peer, $conn);
-            };
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
                 $self->{can_exit} = 1;
-                if ( my ($peer, $conn) = $accept->() ) {                
+                if ( my $peer = accept4(my $conn,$self->{listen_sock},SOCK_CLOEXEC|SOCK_NONBLOCK) ) {
                     my ($peerport, $peerhost, $peeraddr) = (0, undef, undef);
                     if ($self->{_listen_sock_is_tcp}) {
                         setsockopt($conn, IPPROTO_TCP, TCP_NODELAY, 1)
