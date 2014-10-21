@@ -8,6 +8,8 @@ requires 'Server::Starter';
 requires 'AnyEvent';
 requires 'Try::Tiny';
 requires 'Time::HiRes';
+requires 'IO::Vectored';
+requires 'Linux::Socket::Accept4';
 
 on 'test' => sub {
     requires 'Test::More', '0.98';
