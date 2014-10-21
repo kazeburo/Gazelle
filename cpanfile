@@ -5,7 +5,6 @@ requires 'HTTP::Parser::XS';
 requires 'Stream::Buffered';
 requires 'Parallel::Prefork';
 requires 'Server::Starter';
-requires 'AnyEvent';
 requires 'Try::Tiny';
 requires 'Time::HiRes';
 requires 'IO::Vectored';
