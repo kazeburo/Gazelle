@@ -228,7 +228,7 @@ sub run {
                         'REMOTE_PORT'  => $peerport,
                         'SERVER_PORT'  => $server_port,
                         'SERVER_NAME'  => $server_host,
-                        'SCRIPT_NAME'  => '',
+                        'SCRPT_NAME'  => '',
                         'psgi.version' => $psgi_version,
                         'psgi.errors'  => $stderr,
                         'psgi.url_scheme'   => 'http',
@@ -341,7 +341,7 @@ sub _handle_response {
     $lines = "HTTP/1.0 $status_code $StatusCode{$status_code}\015\012" . $lines . "\015\012";
     
     if (defined $body && ref $body eq 'ARRAY' && @$body == 1) {
-        my $written = syswritev($conn, $lines, "$body->[0]") || die "syswritev: $!";
+        my $written = syswritev($conn, $lines, $body->[0]) || die "syswritev: $!";
         if ( $written < length($lines) + length($body->[0]) ) {
             $self->write_all($conn, $lines.$body->[0], $written, $self->{timeout});
         }
