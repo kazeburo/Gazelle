@@ -337,11 +337,37 @@ sub _handle_response {
                                 $DoW[$lt[6]], $lt[3], $MoY[$lt[4]], $lt[5]+1900, $lt[2], $lt[1], $lt[0]) . $lines;
     }
     $lines = "HTTP/1.0 $status_code $StatusCode{$status_code}\015\012" . $lines . "\015\012";
-    
-    if (defined $body && ref $body eq 'ARRAY' && @$body == 1) {
-        my $written = syswritev($conn, $lines, $body->[0]) || die "syswritev: $!";
-        if ( $written < length($lines) + length($body->[0]) ) {
-            $self->write_all($conn, $lines.$body->[0], $written, $self->{timeout});
+
+    if (defined $body && ref $body eq 'ARRAY') {
+        unshift @$body, $lines;
+        while( 1 ) {
+            my $written = syswritev($conn, @$body);
+            if ( !defined($written) && $! != EINTR && $! != EAGAIN && $! != EWOULDBLOCK ) {
+                return;
+            }
+            while ( $written ) {
+                if ( $written >= length $body->[0]  ) {
+                    $written -= length $body->[0];
+                    shift @$body;
+                }
+                else {
+                    substr($body->[0],0,$written,'');
+                    $written = 0;
+                }
+            }
+            return unless @$body;
+            my $timeout = $self->{timeout};
+            while (1) {
+                my ($rfd, $wfd);
+                my $efd = '';
+                vec($efd, fileno($conn), 1) = 1;
+                ($rfd, $wfd) = ('', $efd);
+                my $start_at = time;
+                my $nfound = select($rfd, $wfd, $efd, $timeout);
+                $timeout -= (time - $start_at);
+                last if $nfound;
+                return if $timeout <= 0;
+            }
         }
         return;
     }
