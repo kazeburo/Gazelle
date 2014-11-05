@@ -15,10 +15,12 @@ use Parallel::Prefork;
 use Server::Starter ();
 use Try::Tiny;
 use Time::HiRes qw(time);
-use IO::Vectored;
 use Linux::Socket::Accept4;
 
 our $VERSION = "0.01";
+
+use XSLoader;
+XSLoader::load(__PACKAGE__, $VERSION);
 
 use constant MAX_REQUEST_SIZE => 131072;
 use constant CHUNKSIZE        => 64 * 1024;
@@ -213,6 +215,7 @@ sub run {
             while ( $proc_req_count < $max_reqs_per_child) {
                 $self->{can_exit} = 1;
                 if ( my $peer = accept4(my $conn,$self->{listen_sock},SOCK_CLOEXEC|SOCK_NONBLOCK) ) {
+                #if ( my $peer = accept(my $conn,$self->{listen_sock}) ) {
                     my ($peerport, $peerhost, $peeraddr) = (0, undef, undef);
                     if ($self->{_listen_sock_is_tcp}) {
                         setsockopt($conn, IPPROTO_TCP, TCP_NODELAY, 1)
@@ -338,37 +341,8 @@ sub _handle_response {
     }
     $lines = "HTTP/1.0 $status_code $StatusCode{$status_code}\015\012" . $lines . "\015\012";
 
-    if (defined $body && ref $body eq 'ARRAY') {
-        unshift @$body, $lines;
-        while( 1 ) {
-            my $written = syswritev($conn, @$body);
-            if ( !defined($written) && $! != EINTR && $! != EAGAIN && $! != EWOULDBLOCK ) {
-                return;
-            }
-            while ( $written ) {
-                if ( $written >= length $body->[0]  ) {
-                    $written -= length $body->[0];
-                    shift @$body;
-                }
-                else {
-                    substr($body->[0],0,$written,'');
-                    $written = 0;
-                }
-            }
-            return unless @$body;
-            my $timeout = $self->{timeout};
-            while (1) {
-                my ($rfd, $wfd);
-                my $efd = '';
-                vec($efd, fileno($conn), 1) = 1;
-                ($rfd, $wfd) = ('', $efd);
-                my $start_at = time;
-                my $nfound = select($rfd, $wfd, $efd, $timeout);
-                $timeout -= (time - $start_at);
-                last if $nfound;
-                return if $timeout <= 0;
-            }
-        }
+    if (defined $body && ref $body eq 'ARRAY' ) {
+        write_psgi_response(fileno($conn), $self->{timeout}, $lines, $body);
         return;
     }
     $self->write_all($conn, $lines, 0, $self->{timeout}) or return;

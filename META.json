@@ -43,7 +43,6 @@
       "runtime" : {
          "requires" : {
             "HTTP::Parser::XS" : "0",
-            "IO::Vectored" : "0.110",
             "Linux::Socket::Accept4" : "0",
             "Parallel::Prefork" : "0",
             "Plack" : "0",
