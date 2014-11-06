@@ -61,7 +61,7 @@ _accept(int fileno, struct sockaddr *addr, socklen_t *addrlen) {
       return fd;
     }
 #ifndef SOCK_NONBLOCK
-    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | O_CLOEXEC);
+    fcntl(fd, F_SETFD, FD_CLOEXEC);
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 #endif
     return fd;
