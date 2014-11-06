@@ -48,6 +48,24 @@ svpv2char(SV *sv, STRLEN *lp)
   return SvPV(sv, *lp);
 }
 
+static
+int
+_accept(int fileno, struct sockaddr *addr, socklen_t *addrlen) {
+    int fd;
+#ifdef SOCK_NONBLOCK
+    fd = accept4(fileno, addr, addrlen, SOCK_CLOEXEC|SOCK_NONBLOCK);
+#else
+    fd = accept(fileno, addr, addrlen);
+#endif
+    if (fd < 0) {
+      return fd;
+    }
+#ifndef SOCK_NONBLOCK
+    fcntl(fd, F_SETFD, fcntl(fd, F_GETFD) | O_CLOEXEC);
+    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
+#endif
+    return fd;
+}
 
 static
 ssize_t
@@ -146,7 +164,7 @@ accept_buffer(fileno, timeout, tcp)
     int fileno
     double timeout
     int tcp
-  PREINIT:
+PREINIT:
     int fd;
     struct sockaddr_in cliaddr;
     socklen_t len = sizeof(cliaddr);
@@ -156,11 +174,12 @@ accept_buffer(fileno, timeout, tcp)
     SV * buf;
     int flag = 1;
     ssize_t rv = 0;
-  PPCODE:
+PPCODE:
+{
     /* if ( my ($conn, $buf, $peerport, $peeraddr) = accept_buffer(fileno($server),timeout,tcp) */
 
-    fd = accept4(fileno, (struct sockaddr *)&cliaddr, &len, SOCK_CLOEXEC|SOCK_NONBLOCK);
-
+    fd = _accept(fileno, (struct sockaddr *)&cliaddr, &len);
+    /* endif */
     if (fd < 0) {
       goto badexit;
     }
@@ -195,6 +214,7 @@ accept_buffer(fileno, timeout, tcp)
 
     badexit:
     XSRETURN(0);
+}
 
 unsigned long
 read_timeout(fileno, rbuf, len, offset, timeout)
@@ -287,7 +307,7 @@ write_psgi_response(fileno, timeout, headers, body)
     AV * body
   PREINIT:
     ssize_t rv;
-    ssize_t len;
+    STRLEN len;
     ssize_t iovcnt;
     ssize_t vec_offset;
     ssize_t written;
@@ -330,7 +350,6 @@ write_psgi_response(fileno, timeout, headers, body)
     }
     if (rv < 0) XSRETURN_UNDEF;
     RETVAL = (unsigned long) written;
-
   OUTPUT:
     RETVAL
 
