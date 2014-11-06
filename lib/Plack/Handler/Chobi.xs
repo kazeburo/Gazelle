@@ -67,6 +67,8 @@ _accept(int fileno, struct sockaddr *addr, socklen_t *addrlen) {
     return fd;
 }
 
+static AV *psgi_version;
+
 static
 ssize_t
 _writev_timeout(const int fileno, const double timeout, struct iovec *iovec, const int iovcnt ) {
@@ -159,38 +161,38 @@ MODULE = Plack::Handler::Chobi    PACKAGE = Plack::Handler::Chobi
 
 PROTOTYPES: DISABLE
 
+BOOT:
+{
+    psgi_version = newAV();
+    av_extend(psgi_version, 2);
+    (void)av_push(psgi_version,newSViv(1));
+    (void)av_push(psgi_version,newSViv(1));
+    SvREADONLY_on((SV*)psgi_version);
+}
+
 SV *
-accept_buffer(fileno, timeout, tcp)
+accept_psgi(fileno, timeout, tcp, host, port)
     int fileno
     double timeout
     int tcp
+    SV * host
+    SV * port
 PREINIT:
     int fd;
     struct sockaddr_in cliaddr;
     socklen_t len = sizeof(cliaddr);
     char read_buf[16384];
-    SV * peeraddr;
-    SV * peerport;
-    SV * buf;
+    HV * env;
     int flag = 1;
     ssize_t rv = 0;
 PPCODE:
 {
-    /* if ( my ($conn, $buf, $peerport, $peeraddr) = accept_buffer(fileno($server),timeout,tcp) */
+    /* if ( my ($conn, $buf, $env) = accept_buffer(fileno($server),timeout,tcp,host,port) */
 
     fd = _accept(fileno, (struct sockaddr *)&cliaddr, &len);
     /* endif */
     if (fd < 0) {
       goto badexit;
-    }
-
-    if ( tcp == 1 ) {
-      setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
-      peeraddr = sv_2mortal(newSVpv(inet_ntoa(cliaddr.sin_addr),0));
-      peerport = sv_2mortal(newSViv(cliaddr.sin_port));
-    }
-    else {
-      peerport = sv_2mortal(newSViv(0));
     }
 
     rv = _read_timeout(fd, timeout, &read_buf[0], 16384);
@@ -199,18 +201,36 @@ PPCODE:
       close(fd);
       goto badexit;
     }
-    buf = sv_2mortal(newSVpv(&read_buf[0], rv));
 
-    PUSHs(sv_2mortal(newSViv(fd)));
-    PUSHs(buf);
-    PUSHs(peerport);
+    env = newHV();
+
     if ( tcp == 1 ) {
-      PUSHs(peeraddr);
+      setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+      (void)hv_stores(env,"REMOTE_ADDR",newSVpv(inet_ntoa(cliaddr.sin_addr),0));
+      (void)hv_stores(env,"REMOTE_PORT",newSViv(cliaddr.sin_port));
     }
     else {
-      PUSHs(sv_2mortal(&PL_sv_undef));
+      (void)hv_stores(env,"REMOTE_ADDR",newSV(0));
+      (void)hv_stores(env,"REMOTE_PORT",newSViv(0));
     }
-    XSRETURN(4);
+    (void)hv_stores(env,"SERVER_PORT",          SvREFCNT_inc(port));
+    (void)hv_stores(env,"SERVER_NAME",          SvREFCNT_inc(host));
+    (void)hv_stores(env,"SCRIPT_NAME",          newSVpv("",0));
+    (void)hv_stores(env,"psgi.version",         newRV((SV*)psgi_version));
+    (void)hv_stores(env,"psgi.errors",          newRV((SV*)PL_stderrgv));
+    (void)hv_stores(env,"psgi.url_scheme",      newSVpvs("http"));
+    (void)hv_stores(env,"psgi.run_once",        newSV(0));
+    (void)hv_stores(env,"psgi.multithread",     newSV(0));
+    (void)hv_stores(env,"psgi.multiprocess",    newSViv(1));
+    (void)hv_stores(env,"psgi.streaming",       newSViv(1));
+    (void)hv_stores(env,"psgi.nonblocking",     newSV(0));
+    (void)hv_stores(env,"psgix.input.buffered", newSViv(1));
+    (void)hv_stores(env,"psgix.harakiri",       newSViv(1));
+
+    PUSHs(sv_2mortal(newSViv(fd)));
+    PUSHs(sv_2mortal(newSVpv(&read_buf[0], rv)));
+    PUSHs(sv_2mortal(newRV_noinc((SV*)env)));
+    XSRETURN(3);
 
     badexit:
     XSRETURN(0);

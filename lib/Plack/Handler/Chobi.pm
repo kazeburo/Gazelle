@@ -197,10 +197,6 @@ sub run {
                 $self->{min_reqs_per_child}
             );
 
-            my $stderr = *STDERR;
-            my $server_port = $self->{port} || 0;
-            my $server_host = $self->{host} || 0;
-
             my $proc_req_count = 0;
             $self->{can_exit} = 1;
             local $SIG{TERM} = sub {
@@ -214,28 +210,12 @@ sub run {
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
                 $self->{can_exit} = 1;
-                if ( my ($conn, $pre_buf, $peerport, $peeraddr) = 
-                         accept_buffer(fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp} ) ) {
+                if ( my ($conn, $pre_buf, $env) = accept_psgi(
+                    fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp}, 
+                    $self->{host} || 0, $self->{port} || 0
+                ) ) {
                     my $guard = guard { close_client($conn) };
                     ++$proc_req_count;
-                    my $env = {
-                        'REMOTE_ADDR'  => $peeraddr,
-                        'REMOTE_PORT'  => $peerport,
-                        'SERVER_PORT'  => $server_port,
-                        'SERVER_NAME'  => $server_host,
-                        'SCRPT_NAME'  => '',
-                        'psgi.version' => $psgi_version,
-                        'psgi.errors'  => $stderr,
-                        'psgi.url_scheme'   => 'http',
-                        'psgi.run_once'     => $FALSE,
-                        'psgi.multithread'  => $FALSE,
-                        'psgi.multiprocess' => $TRUE,
-                        'psgi.streaming'    => $TRUE,
-                        'psgi.nonblocking'  => $FALSE,
-                        'psgix.input.buffered' => $TRUE,
-                        'psgix.harakiri'    => 1,
-                    };
-
                     my $res = $bad_response;
                     my $buf = '';
                 READ_REQ:
