@@ -7,7 +7,7 @@ requires 'Parallel::Prefork';
 requires 'Server::Starter';
 requires 'Try::Tiny';
 requires 'Time::HiRes';
-requires 'Linux::Socket::Accept4';
+requires 'Guard';
 
 on 'test' => sub {
     requires 'Test::More', '0.98';
