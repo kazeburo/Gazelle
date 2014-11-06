@@ -15,7 +15,7 @@ use Parallel::Prefork;
 use Server::Starter ();
 use Try::Tiny;
 use Time::HiRes qw(time);
-use Linux::Socket::Accept4;
+use Guard;
 
 our $VERSION = "0.01";
 
@@ -214,15 +214,9 @@ sub run {
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
                 $self->{can_exit} = 1;
-                if ( my $peer = accept4(my $conn,$self->{listen_sock},SOCK_CLOEXEC|SOCK_NONBLOCK) ) {
-                #if ( my $peer = accept(my $conn,$self->{listen_sock}) ) {
-                    my ($peerport, $peerhost, $peeraddr) = (0, undef, undef);
-                    if ($self->{_listen_sock_is_tcp}) {
-                        setsockopt($conn, IPPROTO_TCP, TCP_NODELAY, 1)
-                            or die "setsockopt(TCP_NODELAY) failed:$!";
-                        ($peerport, $peerhost) = unpack_sockaddr_in $peer;
-                        $peeraddr = inet_ntoa($peerhost);
-                    }
+                if ( my ($conn, $pre_buf, $peerport, $peeraddr) = 
+                         accept_buffer(fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp} ) ) {
+                    my $guard = guard { close_client($conn) };
                     ++$proc_req_count;
                     my $env = {
                         'REMOTE_ADDR'  => $peeraddr,
@@ -246,9 +240,14 @@ sub run {
                     my $buf = '';
                 READ_REQ:
                     while (1) {
-                        my $rlen = $self->read_timeout(
-                            $conn, \$buf, MAX_REQUEST_SIZE - length($buf), length($buf), $self->{timeout}
-                        ) or next PROC_LOOP;
+                        if ( length $pre_buf ) {
+                            $buf = $pre_buf;
+                            $pre_buf = '';
+                        } else {
+                            my $rlen = read_timeout(
+                                $conn, \$buf, MAX_REQUEST_SIZE - length($buf), length($buf), $self->{timeout}
+                            ) or next PROC_LOOP;
+                        }
                         $self->{can_exit} = 0;
                         my $reqlen = parse_http_request($buf, $env);
                         if ($reqlen >= 0) {
@@ -262,7 +261,7 @@ sub run {
                                         $chunk = $buf;
                                         $buf = '';
                                     } else {
-                                        $self->read_timeout(
+                                        read_timeout(
                                             $conn, \$chunk, $cl, 0, $self->{timeout})
                                             or next PROC_LOOP;
                                     }
@@ -342,10 +341,10 @@ sub _handle_response {
     $lines = "HTTP/1.0 $status_code $StatusCode{$status_code}\015\012" . $lines . "\015\012";
 
     if (defined $body && ref $body eq 'ARRAY' ) {
-        write_psgi_response(fileno($conn), $self->{timeout}, $lines, $body);
+        write_psgi_response($conn, $self->{timeout}, $lines, $body);
         return;
     }
-    $self->write_all($conn, $lines, 0, $self->{timeout}) or return;
+    write_all($conn, $lines, 0, $self->{timeout}) or return;
 
     if (defined $body) {
         my $failed;
@@ -353,7 +352,7 @@ sub _handle_response {
             $body,
             sub {
                 unless ($failed) {
-                    $self->write_all($conn, $_[0], 0, $self->{timeout})
+                    write_all($conn, $_[0], 0, $self->{timeout})
                         or $failed = 1;
                 }
             },
@@ -361,71 +360,12 @@ sub _handle_response {
     } else {
         return Plack::Util::inline_object
             write => sub {
-                $self->write_all($conn, $_[0], 0, $self->{timeout})
+                write_all($conn, $_[0], 0, $self->{timeout})
             },
             close => sub {
                 #none
             };
     }
-}
-
-
-sub read_timeout {
-    my ($self, $sock, $buf, $len, $off, $timeout) = @_;
-    my $ret;
- DO_READ:
-    $ret = sysread $sock, $$buf, $len, $off
-        and return $ret;
-    unless ((! defined($ret)
-                 && ($! == EINTR || $! == EAGAIN || $! == EWOULDBLOCK))) {
-        return;
-    }
-    while (1) {
-        my ($rfd, $wfd);
-        my $efd = '';
-        vec($efd, fileno($sock), 1) = 1;
-        ($rfd, $wfd) = ($efd, '');
-        my $start_at = time;
-        my $nfound = select($rfd, $wfd, $efd, $timeout);
-        $timeout -= (time - $start_at);
-        last if $nfound;
-        return if $timeout <= 0;
-    }
-    goto DO_READ;
-}
-
-sub write_timeout {
-    my ($self, $sock, $buf, $len, $off, $timeout) = @_;
-    my $ret;
- DO_WRITE:
-    $ret = syswrite $sock, $buf, $len, $off
-        and return $ret;
-    unless ((! defined($ret)
-                 && ($! == EINTR || $! == EAGAIN || $! == EWOULDBLOCK))) {
-        return;
-    }
-    while (1) {
-        my ($rfd, $wfd);
-        my $efd = '';
-        vec($efd, fileno($sock), 1) = 1;
-        ($rfd, $wfd) = ('', $efd);
-        my $start_at = time;
-        my $nfound = select($rfd, $wfd, $efd, $timeout);
-        $timeout -= (time - $start_at);
-        last if $nfound;
-        return if $timeout <= 0;
-    }
-    goto DO_WRITE;
-}
-
-sub write_all {
-    my ($self, $sock, $buf, $off, $timeout) = @_;
-    while (my $len = length($buf) - $off) {
-        my $ret = $self->write_timeout($sock, $buf, $len, $off, $timeout)
-            or return;
-        $off += $ret;
-    }
-    return length $buf;
 }
 
 1;
