@@ -43,7 +43,6 @@
       "runtime" : {
          "requires" : {
             "Guard" : "0",
-            "HTTP::Parser::XS" : "0",
             "Parallel::Prefork" : "0",
             "Plack" : "0",
             "Server::Starter" : "0",

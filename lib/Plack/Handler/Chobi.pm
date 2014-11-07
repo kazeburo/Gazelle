@@ -217,7 +217,7 @@ sub run {
                     $self->{can_exit} = 0;
                     ++$proc_req_count;
                     my $res = $bad_response;
-                READ_REQ:
+
                     if (my $cl = $env->{CONTENT_LENGTH}) {
                         my $buffer = Stream::Buffered->new($cl);
                         while ($cl > 0) {

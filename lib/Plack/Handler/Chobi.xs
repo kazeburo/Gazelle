@@ -52,6 +52,7 @@ extern "C" {
 #define BAD_REQUEST "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request\r\n"
 
 static AV *psgi_version;
+static HV *env_template;
 
 /* Copy from HTTP::Parser::XS */
 STATIC_INLINE
@@ -277,7 +278,7 @@ _accept(int fileno, struct sockaddr *addr, socklen_t *addrlen) {
 
 
 
-static
+STATIC_INLINE
 ssize_t
 _writev_timeout(const int fileno, const double timeout, struct iovec *iovec, const int iovcnt ) {
     int rv;
@@ -306,7 +307,7 @@ _writev_timeout(const int fileno, const double timeout, struct iovec *iovec, con
     goto DO_WRITE;
 }
 
-static
+STATIC_INLINE
 ssize_t
 _read_timeout(const int fileno, const double timeout, char * read_buf, const int read_len ) {
     int rv;
@@ -335,7 +336,7 @@ _read_timeout(const int fileno, const double timeout, char * read_buf, const int
     goto DO_READ;
 }
 
-static
+STATIC_INLINE
 ssize_t
 _write_timeout(const int fileno, const double timeout, char * write_buf, const int write_len ) {
     int rv;
@@ -376,6 +377,55 @@ BOOT:
     (void)av_push(psgi_version,newSViv(1));
     (void)av_push(psgi_version,newSViv(1));
     SvREADONLY_on((SV*)psgi_version);
+
+    HV *e;
+    e = newHV();
+
+    (void)hv_stores(e,"SCRIPT_NAME",          newSVpvs(""));
+    (void)hv_stores(e,"psgi.version",         newRV((SV*)psgi_version));
+    (void)hv_stores(e,"psgi.errors",          newRV((SV*)PL_stderrgv));
+    (void)hv_stores(e,"psgi.url_scheme",      newSVpvs("http"));
+    (void)hv_stores(e,"psgi.run_once",        newSV(0));
+    (void)hv_stores(e,"psgi.multithread",     newSV(0));
+    (void)hv_stores(e,"psgi.multiprocess",    newSViv(1));
+    (void)hv_stores(e,"psgi.streaming",       newSViv(1));
+    (void)hv_stores(e,"psgi.nonblocking",     newSV(0));
+    (void)hv_stores(e,"psgix.input.buffered", newSViv(1));
+    (void)hv_stores(e,"psgix.harakiri",       newSViv(1));
+ 
+    /* stolenn from Feersum */
+    /* placeholders that get defined for every request */
+    (void)hv_stores(e, "SERVER_PROTOCOL", &PL_sv_undef);
+    (void)hv_stores(e, "SERVER_NAME",     &PL_sv_undef);
+    (void)hv_stores(e, "SERVER_PORT",     &PL_sv_undef);
+    (void)hv_stores(e, "REQUEST_URI",     &PL_sv_undef);
+    (void)hv_stores(e, "REQUEST_METHOD",  &PL_sv_undef);
+    (void)hv_stores(e, "PATH_INFO",       &PL_sv_undef);
+    (void)hv_stores(e, "REMOTE_ADDR",     &PL_sv_placeholder);
+    (void)hv_stores(e, "REMOTE_PORT",     &PL_sv_placeholder);
+
+    /* defaults that get changed for some requests */
+    (void)hv_stores(e, "psgi.input",      &PL_sv_placeholder);
+    (void)hv_stores(e, "CONTENT_LENGTH",  &PL_sv_placeholder);
+    (void)hv_stores(e, "QUERY_STRING",    &PL_sv_placeholder);
+
+    /* anticipated headers */
+    (void)hv_stores(e, "CONTENT_TYPE",           &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_HOST",              &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_USER_AGENT",        &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_ACCEPT",            &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_ACCEPT_LANGUAGE",   &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_ACCEPT_CHARSET",    &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_REFERER",           &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_COOKIE",            &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_IF_MODIFIED_SINCE", &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_IF_NONE_MATCH",     &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_IF_MODIFIED_SINCE", &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_IF_NONE_MATCH",     &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_CACHE_CONTROL",     &PL_sv_placeholder);
+    (void)hv_stores(e, "HTTP_X_FORWARDED_FOR",   &PL_sv_placeholder);
+
+    env_template = e;
 }
 
 SV *
@@ -412,7 +462,7 @@ PPCODE:
       goto badexit;
     }
 
-    env = newHV();
+    env = newHVhv(env_template);
 
     if ( tcp == 1 ) {
       setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
@@ -423,19 +473,8 @@ PPCODE:
       (void)hv_stores(env,"REMOTE_ADDR",newSV(0));
       (void)hv_stores(env,"REMOTE_PORT",newSViv(0));
     }
-    (void)hv_stores(env,"SERVER_PORT",          SvREFCNT_inc(port));
-    (void)hv_stores(env,"SERVER_NAME",          SvREFCNT_inc(host));
-    (void)hv_stores(env,"SCRIPT_NAME",          newSVpv("",0));
-    (void)hv_stores(env,"psgi.version",         newRV((SV*)psgi_version));
-    (void)hv_stores(env,"psgi.errors",          newRV((SV*)PL_stderrgv));
-    (void)hv_stores(env,"psgi.url_scheme",      newSVpvs("http"));
-    (void)hv_stores(env,"psgi.run_once",        newSV(0));
-    (void)hv_stores(env,"psgi.multithread",     newSV(0));
-    (void)hv_stores(env,"psgi.multiprocess",    newSViv(1));
-    (void)hv_stores(env,"psgi.streaming",       newSViv(1));
-    (void)hv_stores(env,"psgi.nonblocking",     newSV(0));
-    (void)hv_stores(env,"psgix.input.buffered", newSViv(1));
-    (void)hv_stores(env,"psgix.harakiri",       newSViv(1));
+    (void)hv_stores(env,"SERVER_PORT",SvREFCNT_inc(port));
+    (void)hv_stores(env,"SERVER_NAME",SvREFCNT_inc(host));
 
     buf_len = rv;
     while (1) {
