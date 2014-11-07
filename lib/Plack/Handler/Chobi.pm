@@ -4,7 +4,6 @@ use 5.008005;
 use strict;
 use warnings;
 use Carp ();
-use HTTP::Parser::XS qw(parse_http_request);
 use IO::Socket::INET;
 use List::Util qw(max sum);
 use Plack::Util;
@@ -210,59 +209,36 @@ sub run {
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
                 $self->{can_exit} = 1;
-                if ( my ($conn, $pre_buf, $env) = accept_psgi(
+                if ( my ($conn, $buf, $env) = accept_psgi(
                     fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp}, 
                     $self->{host} || 0, $self->{port} || 0
                 ) ) {
                     my $guard = guard { close_client($conn) };
+                    $self->{can_exit} = 0;
                     ++$proc_req_count;
                     my $res = $bad_response;
-                    my $buf = '';
                 READ_REQ:
-                    while (1) {
-                        if ( length $pre_buf ) {
-                            $buf = $pre_buf;
-                            $pre_buf = '';
-                        } else {
-                            my $rlen = read_timeout(
-                                $conn, \$buf, MAX_REQUEST_SIZE - length($buf), length($buf), $self->{timeout}
-                            ) or next PROC_LOOP;
-                        }
-                        $self->{can_exit} = 0;
-                        my $reqlen = parse_http_request($buf, $env);
-                        if ($reqlen >= 0) {
-                            # handle request
-                            if (my $cl = $env->{CONTENT_LENGTH}) {
-                                $buf = substr $buf, $reqlen;
-                                my $buffer = Stream::Buffered->new($cl);
-                                while ($cl > 0) {
-                                    my $chunk;
-                                    if (length $buf) {
-                                        $chunk = $buf;
-                                        $buf = '';
-                                    } else {
-                                        read_timeout(
-                                            $conn, \$chunk, $cl, 0, $self->{timeout})
-                                            or next PROC_LOOP;
-                                    }
-                                    $buffer->print($chunk);
-                                    $cl -= length $chunk;
-                                }
-                                $env->{'psgi.input'} = $buffer->rewind;
+                    if (my $cl = $env->{CONTENT_LENGTH}) {
+                        my $buffer = Stream::Buffered->new($cl);
+                        while ($cl > 0) {
+                            my $chunk;
+                            if (length $buf) {
+                                $chunk = $buf;
+                                $buf = '';
                             } else {
-                                $env->{'psgi.input'} = $null_io;
+                                read_timeout(
+                                    $conn, \$chunk, $cl, 0, $self->{timeout})
+                                    or next PROC_LOOP;
                             }
-                            
-                            $res = Plack::Util::run_app $app, $env;
-                            last READ_REQ;
+                            $buffer->print($chunk);
+                            $cl -= length $chunk;
                         }
-                        if ($reqlen == -2) {
-                            # request is incomplete, do nothing
-                        } elsif ($reqlen == -1) {
-                            # error, close conn
-                            last READ_REQ;
-                        }
+                        $env->{'psgi.input'} = $buffer->rewind;
+                    } else {
+                        $env->{'psgi.input'} = $null_io;
                     }
+                    
+                    $res = Plack::Util::run_app $app, $env;
                     
                     if (ref $res eq 'ARRAY') {
                         $self->_handle_response($res, $conn);

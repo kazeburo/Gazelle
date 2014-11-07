@@ -1,7 +1,6 @@
 requires 'perl', '5.008001';
 
 requires 'Plack';
-requires 'HTTP::Parser::XS';
 requires 'Stream::Buffered';
 requires 'Parallel::Prefork';
 requires 'Server::Starter';
