@@ -15,6 +15,8 @@ use Server::Starter ();
 use Try::Tiny;
 use Time::HiRes qw(time);
 use Guard;
+use HTTP::Status;
+use HTTP::Date;
 
 our $VERSION = "0.01";
 
@@ -26,77 +28,6 @@ use constant CHUNKSIZE        => 64 * 1024;
 
 my $null_io = do { open my $io, "<", \""; $io };
 my $bad_response = [ 400, [ 'Content-Type' => 'text/plain', 'Connection' => 'close' ], [ 'Bad Request' ] ];
-my $psgi_version = [1,1];
-
-my $TRUE = Plack::Util::TRUE;
-my $FALSE = Plack::Util::FALSE;
-
-my @DoW = qw(Sun Mon Tue Wed Thu Fri Sat);
-my @MoY = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
-
-# Unmarked codes are from RFC 2616
-# See also: http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-
-my %StatusCode = (
-    100 => 'Continue',
-    101 => 'Switching Protocols',
-    102 => 'Processing',                      # RFC 2518 (WebDAV)
-    200 => 'OK',
-    201 => 'Created',
-    202 => 'Accepted',
-    203 => 'Non-Authoritative Information',
-    204 => 'No Content',
-    205 => 'Reset Content',
-    206 => 'Partial Content',
-    207 => 'Multi-Status',                    # RFC 2518 (WebDAV)
-    208 => 'Already Reported',		      # RFC 5842
-    300 => 'Multiple Choices',
-    301 => 'Moved Permanently',
-    302 => 'Found',
-    303 => 'See Other',
-    304 => 'Not Modified',
-    305 => 'Use Proxy',
-    307 => 'Temporary Redirect',
-    400 => 'Bad Request',
-    401 => 'Unauthorized',
-    402 => 'Payment Required',
-    403 => 'Forbidden',
-    404 => 'Not Found',
-    405 => 'Method Not Allowed',
-    406 => 'Not Acceptable',
-    407 => 'Proxy Authentication Required',
-    408 => 'Request Timeout',
-    409 => 'Conflict',
-    410 => 'Gone',
-    411 => 'Length Required',
-    412 => 'Precondition Failed',
-    413 => 'Request Entity Too Large',
-    414 => 'Request-URI Too Large',
-    415 => 'Unsupported Media Type',
-    416 => 'Request Range Not Satisfiable',
-    417 => 'Expectation Failed',
-    418 => 'I\'m a teapot',		      # RFC 2324
-    422 => 'Unprocessable Entity',            # RFC 2518 (WebDAV)
-    423 => 'Locked',                          # RFC 2518 (WebDAV)
-    424 => 'Failed Dependency',               # RFC 2518 (WebDAV)
-    425 => 'No code',                         # WebDAV Advanced Collections
-    426 => 'Upgrade Required',                # RFC 2817
-    428 => 'Precondition Required',
-    429 => 'Too Many Requests',
-    431 => 'Request Header Fields Too Large',
-    449 => 'Retry with',                      # unofficial Microsoft
-    500 => 'Internal Server Error',
-    501 => 'Not Implemented',
-    502 => 'Bad Gateway',
-    503 => 'Service Unavailable',
-    504 => 'Gateway Timeout',
-    505 => 'HTTP Version Not Supported',
-    506 => 'Variant Also Negotiates',         # RFC 2295
-    507 => 'Insufficient Storage',            # RFC 2518 (WebDAV)
-    509 => 'Bandwidth Limit Exceeded',        # unofficial
-    510 => 'Not Extended',                    # RFC 2774
-    511 => 'Network Authentication Required',
-);
 
 sub new {
     my($class, %args) = @_;
@@ -290,12 +221,10 @@ sub _handle_response {
     }
 
     if ( !$self->{disable_date_header} && ! $send_date ) {
-        my @lt = gmtime();
-        $lines = sprintf("Date: %s, %02d %s %04d %02d:%02d:%02d GMT\015\012",
-                                $DoW[$lt[6]], $lt[3], $MoY[$lt[4]], $lt[5]+1900, $lt[2], $lt[1], $lt[0]) . $lines;
+        $lines = "Date: ".time2str() . "\015\012$lines";
     }
-    $lines = "HTTP/1.0 $status_code $StatusCode{$status_code}\015\012" . $lines . "\015\012";
-
+    
+    $lines = "HTTP/1.0 $status_code ".status_message($status_code)."\015\012$lines\015\012";
     if (defined $body && ref $body eq 'ARRAY' ) {
         write_psgi_response($conn, $self->{timeout}, $lines, $body);
         return;
@@ -332,7 +261,7 @@ __END__
 
 =head1 NAME
 
-Plack::Handler::Chobi - Starlet for performance freaks
+Plack::Handler::Chobi - Preforked Plack::Handler for performance freaks
 
 =head1 SYNOPSIS
 
@@ -341,9 +270,58 @@ Plack::Handler::Chobi - Starlet for performance freaks
 
 =head1 DESCRIPTION
 
-Plack::Handler::Chobi is a PSGI Handler based on Starlet code.
+Plack::Handler::Chobi is a PSGI Handler based on Starlet code. Many code was rewritten and optimized by XS.
 
-Chobi is optimized Starlet for performance.
+Plack::Handler::Chobi's supports and does not support follwing freatures.
+
+- only supports HTTP/1.0. But Chobi does not support Keepalive.
+
+- ultra fast HTTP processing useing picohttpparser
+
+- uses accept4(2) if OS support
+
+- uses writev(2) for output responses
+
+- prefork and graceful shutdown using Parallel::Prefork
+
+- hot deploy using Server::Starter
+
+Chobi is suitable for running HTTP application servers behind a reverse proxy link nginx.
+
+=head1 COMMAND LINE OPTIONS
+
+In addition to the options supported by plackup, Chobi accepts following options(s).
+
+=head2 --max-workers=#
+
+number of worker processes (default: 10)
+
+=head2 --timeout=#
+
+seconds until timeout (default: 300)
+
+=head2 --max-reqs-per-child=#
+
+max. number of requests to be handled before a worker process exits (default: 1000)
+
+=head2 --min-reqs-per-child=#
+
+if set, randomizes the number of requests handled by a single worker process between the value and that supplied by C<--max-reqs-per-chlid> (default: none)
+
+=head2 --spawn-interval=#
+
+if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html for more information. (dedault: none)
+
+=head2 --disable-date-header
+
+if set, Chobi will not add a Date header to response header.
+
+=head1 SEE ALSO
+
+L<Starlet>
+L<Parallel::Prefork>
+L<Server::Starter>
+L<https://github.com/h2o/picohttpparser>
 
 =head1 LICENSE of Starlet 
 
