@@ -48,21 +48,13 @@ extern "C" {
 #define MAX_HEADER_SIZE 16384
 #define MAX_HEADER_NAME_LEN 1024
 #define MAX_HEADERS         128
-
 #define BAD_REQUEST "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request\r\n"
 
-static AV *psgi_version;
+#define TOU(ch) (('a' <= ch && ch <= 'z') ? ch - ('a' - 'A') : ch)
+
 static HV *env_template;
 
-/* Copy from HTTP::Parser::XS */
-STATIC_INLINE
-char tou(char ch)
-{
-  if ('a' <= ch && ch <= 'z')
-    ch -= 'a' - 'A';
-  return ch;
-}
-
+/* stolen from HTTP::Parser::XS */
 static
 size_t find_ch(const char* s, size_t len, char ch)
 {
@@ -73,21 +65,6 @@ size_t find_ch(const char* s, size_t len, char ch)
   return i;
 }
 
-STATIC_INLINE
-int hex_decode(const char ch)
-{
-  int r;
-  if ('0' <= ch && ch <= '9')
-    r = ch - '0';
-  else if ('A' <= ch && ch <= 'F')
-    r = ch - 'A' + 0xa;
-  else if ('a' <= ch && ch <= 'f')
-    r = ch - 'a' + 0xa;
-  else
-    r = -1;
-  return r;
-}
-
 static
 int header_is(const struct phr_header* header, const char* name,
                     size_t len)
@@ -96,67 +73,51 @@ int header_is(const struct phr_header* header, const char* name,
   if (header->name_len != len)
     return 0;
   for (x = header->name, y = name; len != 0; --len, ++x, ++y)
-    if (tou(*x) != *y)
+    if (TOU(*x) != *y)
       return 0;
   return 1;
 }
 
-static
-char* url_decode(const char* s, size_t len)
-{
-  dTHX;
-  char* dbuf, * d;
-  size_t i;
-  
-  for (i = 0; i < len; ++i)
-    if (s[i] == '%')
-      goto NEEDS_DECODE;
-  return (char*)s;
-  
- NEEDS_DECODE:
-  dbuf = (char*)malloc(len - 1);
-  assert(dbuf != NULL);
-  memcpy(dbuf, s, i);
-  d = dbuf + i;
-  while (i < len) {
-    if (s[i] == '%') {
-      int hi, lo;
-      if ((hi = hex_decode(s[i + 1])) == -1
-          || (lo = hex_decode(s[i + 2])) == -1) {
-        free(dbuf);
-        return NULL;
-      }
-      *d++ = hi * 16 + lo;
-      i += 3;
-    } else
-      *d++ = s[i++];
-  }
-  *d = '\0';
-  return dbuf;
-}
 
 STATIC_INLINE
-int store_url_decoded(HV* env, const char* name, size_t name_len,
-                               const char* value, size_t value_len)
-{
-  dTHX;
-  char* decoded = url_decode(value, value_len);
-  if (decoded == NULL)
-    return -1;
-  
-  if (decoded == value)
-    (void)hv_store(env, name, name_len, newSVpvn(value, value_len), 0);
-  else {
-    (void)hv_store(env, name, name_len, newSVpv(decoded, 0), 0);
-    free(decoded);
+void
+store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
+  size_t dlen = 0, i = 0;
+  char *d;
+  char s2, s3;
+  SV * dst;
+
+  dst = newSV(0);
+  (void)SvUPGRADE(dst, SVt_PV);
+  d = SvGROW(dst, src_len * 3 + 1);
+
+  for (i = 0; i < src_len; i++ ) {
+    if ( src[i] == '%' && isxdigit(src[i+1]) && isxdigit(src[i+2]) ) {
+      s2 = src[i+1];
+      s3 = src[i+2];
+      s2 -= s2 <= '9' ? '0'
+          : s2 <= 'F' ? 'A' - 10
+          : 'a' - 10;
+      s3 -= s3 <= '9' ? '0'
+          : s3 <= 'F' ? 'A' - 10
+          : 'a' - 10;
+       d[dlen++] = s2 * 16 + s3;
+       i += 2;
+    }
+    else {
+      d[dlen++] = src[i];
+    }
   }
-  return 0;
+
+  SvCUR_set(dst, dlen);
+  SvPOK_only(dst);
+  (void)hv_stores(env, "PATH_INFO", dst);
 }
 
 
 STATIC_INLINE
 int
-_parse_http_request(char *buf, ssize_t buf_len, HV *env){
+_parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   const char* method;
   size_t method_len;
   const char* path;
@@ -188,11 +149,7 @@ _parse_http_request(char *buf, ssize_t buf_len, HV *env){
   /* PATH_INFO QUERY_STRING */
   path_len = find_ch(path, path_len, '#'); /* strip off all text after # after storing request_uri */
   question_at = find_ch(path, path_len, '?');
-  if ( store_url_decoded(env, "PATH_INFO", sizeof("PATH_INFO") - 1, path, question_at) != 0 ) {
-    hv_clear(env);
-    ret = -1;
-    goto done;
-  }
+  store_path_info(aTHX_ env, path, question_at);
   if (question_at != path_len) ++question_at;
   (void)hv_stores(env, "QUERY_STRING", newSVpvn(path + question_at, path_len - question_at));
 
@@ -221,7 +178,7 @@ _parse_http_request(char *buf, ssize_t buf_len, HV *env){
         for (s = headers[i].name, n = headers[i].name_len, d = tmp + 5;
           n != 0;
           s++, --n, d++) {
-            *d = *s == '-' ? '_' : tou(*s);
+            *d = *s == '-' ? '_' : TOU(*s);
             name = tmp;
             name_len = headers[i].name_len + 5;
         }
@@ -249,13 +206,11 @@ STATIC_INLINE
 char *
 svpv2char(SV *sv, STRLEN *lp)
 {
-  if (!SvOK(sv)) {
-    sv_setpvn(sv,"",0);
-  }
   if (SvGAMAGIC(sv))
     sv = sv_2mortal(newSVsv(sv));
   return SvPV(sv, *lp);
 }
+
 
 STATIC_INLINE
 int
@@ -372,6 +327,7 @@ PROTOTYPES: DISABLE
 
 BOOT:
 {
+    AV * psgi_version;
     psgi_version = newAV();
     av_extend(psgi_version, 2);
     (void)av_push(psgi_version,newSViv(1));
@@ -380,7 +336,6 @@ BOOT:
 
     HV *e;
     e = newHV();
-
     (void)hv_stores(e,"SCRIPT_NAME",          newSVpvs(""));
     (void)hv_stores(e,"psgi.version",         newRV((SV*)psgi_version));
     (void)hv_stores(e,"psgi.errors",          newRV((SV*)PL_stderrgv));
@@ -478,7 +433,7 @@ PPCODE:
 
     buf_len = rv;
     while (1) {
-      reqlen = _parse_http_request(&read_buf[0],buf_len,env);
+      reqlen = _parse_http_request(aTHX_ &read_buf[0],buf_len,env);
       if ( reqlen >= 0 ) {
         break;
       }
@@ -619,9 +574,14 @@ write_psgi_response(fileno, timeout, headers, body)
       struct iovec v[iovcnt]; // Needs C99 compiler
       v[0].iov_base = svpv2char(headers, &len);
       v[0].iov_len = len;
+      iovcnt = 1;
       for (i=0; i < av_len(body) + 1; i++ ) {
-        v[i+1].iov_base = svpv2char(*av_fetch(body,i,0), &len);
-        v[i+1].iov_len = len;
+        if (!SvOK(*av_fetch(body,i,0))) {
+          continue;
+        }
+        v[iovcnt].iov_base = svpv2char(*av_fetch(body,i,0), &len);
+        v[iovcnt].iov_len = len;
+        iovcnt++;
       }
 
       vec_offset = 0;
