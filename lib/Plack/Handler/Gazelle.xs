@@ -298,6 +298,7 @@ STATIC_INLINE
 char *
 svpv2char(SV *sv, STRLEN *lp)
 {
+  pTHX;
   if (SvGAMAGIC(sv))
     sv = sv_2mortal(newSVsv(sv));
   return SvPV(sv, *lp);
