@@ -718,7 +718,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, disable_date_he
         time(&lt);
         gmtime_r(&lt, &gtm);
         date_line_len = sprintf(date_line,
-          "Date: %s, %02d %s %04d %02d:%02d:%02d GMT\r\n",
+          "Date: %s, %02d %s %04d %02d:%02d:%02d GMT\r\n\r\n",
           DoW[gtm.tm_wday],
           gtm.tm_mday,
           MoY[gtm.tm_mon],
@@ -729,10 +729,11 @@ write_psgi_response(fileno, timeout, status_code, headers, body, disable_date_he
         v[iovcnt].iov_len = date_line_len;
         iovcnt++;
       }
-
-      v[iovcnt].iov_base = "\r\n";
-      v[iovcnt].iov_len = sizeof("\r\n") - 1;
-      iovcnt++;
+      else {
+        v[iovcnt].iov_base = "\r\n";
+        v[iovcnt].iov_len = sizeof("\r\n") - 1;
+        iovcnt++;
+      }
 
       for (i=0; i < av_len(body) + 1; i++ ) {
         if (!SvOK(*av_fetch(body,i,0))) {
