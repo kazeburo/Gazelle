@@ -26,11 +26,11 @@ Gazelle - Preforked Plack Handler for performance freaks
 Gazelle is a PSGI Handler. It's created based on L<Starlet> code. 
 Many code was rewritten and optimized by XS.
 
-Gazelle supports following freatures.
+Gazelle supports following features.
 
 - only supports HTTP/1.0. But does not support Keepalive.
 
-- ultra fast HTTP processing useing picohttpparser
+- ultra fast HTTP processing using picohttpparser
 
 - uses accept4(2) if OS support
 
@@ -41,6 +41,8 @@ Gazelle supports following freatures.
 - hot deploy and unix domain socket using Server::Starter
 
 Gazelle is suitable for running HTTP application servers behind a reverse proxy link nginx.
+
+Benchmark is here. https://github.com/kazeburo/Gazelle/wiki/Benchmark
 
 =head1 SAMPLE CONFIGURATION WITH NGINX
 
@@ -60,7 +62,7 @@ nginx.conf
     }
   }
 
-comannd line of running Gazelle
+command line of running Gazelle
 
   $ start_server --path /path/to/app.sock --backlog 16384 -- plackup -s Gazelle \
     -workers=20 --max-reqs-per-child 1000 --min-reqs-per-child 800 -E production -a app.psgi
@@ -89,7 +91,7 @@ if set, randomizes the number of requests handled by a single worker process bet
 
 =head2 --spawn-interval=#
 
-if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html for more information. (dedault: none)
+if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html for more information. (default: none)
 
 =head1 SEE ALSO
 
