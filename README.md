@@ -4,7 +4,7 @@ Gazelle - Preforked Plack Handler for performance freaks
 
 # SYNOPSIS
 
-    $ plackup -s Chobi --port 5003 --max-reqs-per-child 50000 \
+    $ plackup -s Gazelle --port 5003 --max-reqs-per-child 50000 \
          -E production -a app.psgi
 
 # DESCRIPTION
@@ -12,7 +12,7 @@ Gazelle - Preforked Plack Handler for performance freaks
 Gazelle is a PSGI Handler. It's created based on [Starlet](https://metacpan.org/pod/Starlet) code. 
 Many code was rewritten and optimized by XS.
 
-Gazelle supports follwing freatures.
+Gazelle supports following freatures.
 
 \- only supports HTTP/1.0. But does not support Keepalive.
 
@@ -26,7 +26,7 @@ Gazelle supports follwing freatures.
 
 \- hot deploy and unix domain socket using Server::Starter
 
-Chobi is suitable for running HTTP application servers behind a reverse proxy link nginx.
+Gazelle is suitable for running HTTP application servers behind a reverse proxy link nginx.
 
 # SAMPLE CONFIGURATION WITH NGINX
 

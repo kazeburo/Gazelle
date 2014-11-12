@@ -64,13 +64,13 @@
    "release_status" : "unstable",
    "resources" : {
       "bugtracker" : {
-         "web" : "https://github.com/kazeburo/Chobi/issues"
+         "web" : "https://github.com/kazeburo/Gazelle/issues"
       },
-      "homepage" : "https://github.com/kazeburo/Chobi",
+      "homepage" : "https://github.com/kazeburo/Gazelle",
       "repository" : {
          "type" : "git",
-         "url" : "git://github.com/kazeburo/Chobi.git",
-         "web" : "https://github.com/kazeburo/Chobi"
+         "url" : "git://github.com/kazeburo/Gazelle.git",
+         "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
    "version" : "0.01",
