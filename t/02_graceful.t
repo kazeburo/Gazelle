@@ -6,7 +6,7 @@ use Plack::Test;
 use Test::More;
 
 $Plack::Test::Impl = 'Server';
-$ENV{PLACK_SERVER} = 'Chobi';
+$ENV{PLACK_SERVER} = 'Gazelle';
 
 warn $$;
 

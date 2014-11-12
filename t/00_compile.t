@@ -2,7 +2,7 @@ use strict;
 use Test::More;
 
 use_ok $_ for qw(
-    Plack::Handler::Chobi
+    Plack::Handler::Gazelle
 );
 
 done_testing;

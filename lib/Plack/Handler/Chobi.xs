@@ -413,7 +413,7 @@ _write_timeout(const int fileno, const double timeout, char * write_buf, const i
 }
 
 
-MODULE = Plack::Handler::Chobi    PACKAGE = Plack::Handler::Chobi
+MODULE = Plack::Handler::Gazelle    PACKAGE = Plack::Handler::Gazelle
 
 PROTOTYPES: DISABLE
 
