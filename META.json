@@ -74,5 +74,8 @@
       }
    },
    "version" : "0.01",
-   "x_authority" : "cpan:KAZEBURO"
+   "x_authority" : "cpan:KAZEBURO",
+   "x_contributors" : [
+      "mattn <mattn.jp@gmail.com>"
+   ]
 }

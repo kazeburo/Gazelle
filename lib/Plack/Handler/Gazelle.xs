@@ -296,9 +296,8 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
 
 STATIC_INLINE
 char *
-svpv2char(SV *sv, STRLEN *lp)
+svpv2char(pTHX_ SV *sv, STRLEN *lp)
 {
-  pTHX;
   if (SvGAMAGIC(sv))
     sv = sv_2mortal(newSVsv(sv));
   return SvPV(sv, *lp);
@@ -689,7 +688,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       date_pushed = 0;
       while ( i < av_len(headers) + 1 ) {
         /* key */
-        key = svpv2char(*av_fetch(headers,i,0), &len);
+        key = svpv2char(aTHX_ *av_fetch(headers,i,0), &len);
         if ( strncasecmp(key,"Connection",len) == 0 ) {
           i += 2;
           continue;
@@ -705,7 +704,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
         iovcnt++;
         i++;
         /* value */
-        v[iovcnt].iov_base = svpv2char(*av_fetch(headers,i,0), &len);
+        v[iovcnt].iov_base = svpv2char(aTHX_ *av_fetch(headers,i,0), &len);
         v[iovcnt].iov_len = len;
         iovcnt++;
         v[iovcnt].iov_base = "\r\n";
@@ -739,7 +738,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
         if (!SvOK(*av_fetch(body,i,0))) {
           continue;
         }
-        v[iovcnt].iov_base = svpv2char(*av_fetch(body,i,0), &len);
+        v[iovcnt].iov_base = svpv2char(aTHX_ *av_fetch(body,i,0), &len);
         v[iovcnt].iov_len = len;
         iovcnt++;
       }
