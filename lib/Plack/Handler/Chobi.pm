@@ -224,10 +224,10 @@ sub _handle_response {
     #$lines = "HTTP/1.0 $status_code ".status_message($status_code)."\015\012$lines\015\012";
 
     if (defined $body && ref $body eq 'ARRAY' ) {
-        write_psgi_response($conn, $self->{timeout}, $status_code, $headers , $body);
+        write_psgi_response($conn, $self->{timeout}, $status_code, $headers , $body, $self->{disable_date_header});
         return;
     }
-    write_psgi_response($conn, $self->{timeout}, $status_code, $headers , []) or return;
+    write_psgi_response($conn, $self->{timeout}, $status_code, $headers, [], $self->{disable_date_header}) or return;
 
     if (defined $body) {
         my $failed;
