@@ -327,10 +327,11 @@ _accept(int fileno, struct sockaddr *addr, socklen_t *addrlen) {
 
 STATIC_INLINE
 ssize_t
-_writev_timeout(const int fileno, const double timeout, struct iovec *iovec, const int iovcnt ) {
+_writev_timeout(const int fileno, const double timeout, struct iovec *iovec, const int iovcnt, const int do_select ) {
     int rv;
     int nfound;
     struct pollfd wfds[1];
+    if ( do_select == 1) goto WAIT_WRITE;
   DO_WRITE:
     rv = writev(fileno, iovec, iovcnt);
     if ( rv >= 0 ) {
@@ -747,7 +748,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       written = 0;
       while ( iovcnt - vec_offset > 0 ) {
         count = (iovcnt > IOV_MAX) ? IOV_MAX : iovcnt;
-        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count - vec_offset);
+        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count - vec_offset, (vec_offset == 0) ? 0 : 1);
         if ( rv <= 0 ) {
           // error or disconnected
           break;
