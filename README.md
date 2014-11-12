@@ -77,10 +77,6 @@ if set, randomizes the number of requests handled by a single worker process bet
 
 if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html for more information. (dedault: none)
 
-## --disable-date-header
-
-if set, Chobi will not add a Date header to response header.
-
 # SEE ALSO
 
 [Starlet](https://metacpan.org/pod/Starlet)

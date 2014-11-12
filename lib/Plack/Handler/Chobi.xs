@@ -646,13 +646,12 @@ close_client(fileno)
     close(fileno);
 
 unsigned long
-write_psgi_response(fileno, timeout, status_code, headers, body, disable_date_header)
+write_psgi_response(fileno, timeout, status_code, headers, body)
     int fileno
     double timeout
     int status_code
     AV * headers
     AV * body
-    int disable_date_header
   PREINIT:
     ssize_t rv;
     STRLEN len;
@@ -686,7 +685,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, disable_date_he
       iovcnt++;
 
       i=0;
-      date_pushed = disable_date_header;
+      date_pushed = 0;
       while ( i < av_len(headers) + 1 ) {
         /* key */
         key = svpv2char(*av_fetch(headers,i,0), &len);

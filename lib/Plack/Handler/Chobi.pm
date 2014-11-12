@@ -61,7 +61,6 @@ sub new {
         port                 => $args{port} || 8080,
         timeout              => $args{timeout} || 300,
         max_workers          => $max_workers,
-        disable_date_header  => (exists $args{date_header} && !$args{date_header}) ? 1 : 0,
         min_reqs_per_child   => (
             defined $args{min_reqs_per_child}
                 ? $args{min_reqs_per_child} : undef,
@@ -208,26 +207,11 @@ sub _handle_response {
     my $headers = $res->[1];
     my $body = $res->[2];
     
-    #my $lines = "Connection: close\015\012";
-    #my $send_date;
-    #for (my $i = 0; $i < @$headers; $i += 2) {
-    #    my $k = $headers->[$i];
-    #    my $v = $headers->[$i + 1];
-    #    my $lck = lc $k;
-    #    next if $lck eq 'connection';
-    #    $send_date = 1 if $lck eq 'date';
-    #    $lines .= "$k: $v\015\012";
-    #}
-    #if ( !$self->{disable_date_header} && ! $send_date ) {
-    #    $lines = "Date: ".time2str() . "\015\012$lines";
-    #}
-    #$lines = "HTTP/1.0 $status_code ".status_message($status_code)."\015\012$lines\015\012";
-
     if (defined $body && ref $body eq 'ARRAY' ) {
-        write_psgi_response($conn, $self->{timeout}, $status_code, $headers , $body, $self->{disable_date_header});
+        write_psgi_response($conn, $self->{timeout}, $status_code, $headers , $body);
         return;
     }
-    write_psgi_response($conn, $self->{timeout}, $status_code, $headers, [], $self->{disable_date_header}) or return;
+    write_psgi_response($conn, $self->{timeout}, $status_code, $headers, []) or return;
 
     if (defined $body) {
         my $failed;
@@ -335,10 +319,6 @@ if set, randomizes the number of requests handled by a single worker process bet
 =head2 --spawn-interval=#
 
 if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html for more information. (dedault: none)
-
-=head2 --disable-date-header
-
-if set, Chobi will not add a Date header to response header.
 
 =head1 SEE ALSO
 
