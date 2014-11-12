@@ -1,3 +1,15 @@
+package Gazelle;
+
+use 5.008005;
+use strict;
+use warnings;
+
+our $VERSION = "0.01";
+
+1;
+
+__END__
+
 =encoding utf-8
 
 =head1 NAME

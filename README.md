@@ -1,6 +1,6 @@
 # NAME
 
-Plack::Handler::Chobi - Preforked Plack Handler for performance freaks
+Gazelle - Preforked Plack Handler for performance freaks
 
 # SYNOPSIS
 
@@ -9,12 +9,12 @@ Plack::Handler::Chobi - Preforked Plack Handler for performance freaks
 
 # DESCRIPTION
 
-Plack::Handler::Chobi is a PSGI Handler. It's created based on [Starlet](https://metacpan.org/pod/Starlet) code. 
+Gazelle is a PSGI Handler. It's created based on [Starlet](https://metacpan.org/pod/Starlet) code. 
 Many code was rewritten and optimized by XS.
 
-Plack::Handler::Chobi's supports follwing freatures.
+Gazelle supports follwing freatures.
 
-\- only supports HTTP/1.0. But Chobi does not support Keepalive.
+\- only supports HTTP/1.0. But does not support Keepalive.
 
 \- ultra fast HTTP processing useing picohttpparser
 
@@ -46,16 +46,16 @@ nginx.conf
       }
     }
 
-comannd line of running Chobi
+comannd line of running Gazelle
 
-    $ start_server --path /path/to/app.sock --backlog 16384 -- plackup -s Chobi \
+    $ start_server --path /path/to/app.sock --backlog 16384 -- plackup -s Gazelle \
       -workers=20 --max-reqs-per-child 1000 --min-reqs-per-child 800 -E production -a app.psgi
 
 start\_server is bundled with [Server::Starter](https://metacpan.org/pod/Server::Starter)
 
 # COMMAND LINE OPTIONS
 
-In addition to the options supported by plackup, Chobi accepts following options(s).
+In addition to the options supported by plackup, Gazelle accepts following options(s).
 
 ## --max-workers=#
 
