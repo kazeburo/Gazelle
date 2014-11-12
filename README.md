@@ -1,6 +1,6 @@
 # NAME
 
-Plack::Handler::Chobi - Preforked Plack::Handler for performance freaks
+Plack::Handler::Chobi - Preforked Plack Handler for performance freaks
 
 # SYNOPSIS
 
@@ -9,9 +9,10 @@ Plack::Handler::Chobi - Preforked Plack::Handler for performance freaks
 
 # DESCRIPTION
 
-Plack::Handler::Chobi is a PSGI Handler based on Starlet code. Many code was rewritten and optimized by XS.
+Plack::Handler::Chobi is a PSGI Handler. It's created based on [Starlet](https://metacpan.org/pod/Starlet) code. 
+Many code was rewritten and optimized by XS.
 
-Plack::Handler::Chobi's supports and does not support follwing freatures.
+Plack::Handler::Chobi's supports follwing freatures.
 
 \- only supports HTTP/1.0. But Chobi does not support Keepalive.
 
@@ -23,9 +24,34 @@ Plack::Handler::Chobi's supports and does not support follwing freatures.
 
 \- prefork and graceful shutdown using Parallel::Prefork
 
-\- hot deploy using Server::Starter
+\- hot deploy and unix domain socket using Server::Starter
 
 Chobi is suitable for running HTTP application servers behind a reverse proxy link nginx.
+
+# SAMPLE CONFIGURATION WITH NGINX
+
+nginx.conf
+
+    http {
+      upstream app {
+        server unix:/path/to/app.sock;
+      }
+      server {
+        location / {
+          proxy_pass http://app;
+        }
+        location ~ ^/(stylesheets|images)/ {
+          root /path/to/webapp/public;
+        }
+      }
+    }
+
+comannd line of running Chobi
+
+    $ start_server --path /path/to/app.sock --backlog 16384 -- plackup -s Chobi \
+      -workers=20 --max-reqs-per-child 1000 --min-reqs-per-child 800 -E production -a app.psgi
+
+start\_server is bundled with [Server::Starter](https://metacpan.org/pod/Server::Starter)
 
 # COMMAND LINE OPTIONS
 

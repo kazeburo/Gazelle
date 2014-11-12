@@ -52,7 +52,98 @@ extern "C" {
 
 #define TOU(ch) (('a' <= ch && ch <= 'z') ? ch - ('a' - 'A') : ch)
 
+static const char *DoW[] = {
+  "Sun","Mon","Tue","Wed","Thu","Fri","Sat"
+};
+static const char *MoY[] = {
+  "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
+};
+
 static HV *env_template;
+
+/* stolen from HTTP::Status and Feersum */
+/* Unmarked codes are from RFC 2616 */
+/* See also: http://en.wikipedia.org/wiki/List_of_HTTP_status_codes */
+static const char *
+status_message (int code) {
+  switch (code) {
+    case 100: return "Continue";
+    case 101: return "Switching Protocols";
+    case 102: return "Processing";                      /* RFC 2518 (WebDAV) */
+    case 200: return "OK";
+    case 201: return "Created";
+    case 202: return "Accepted";
+    case 203: return "Non-Authoritative Information";
+    case 204: return "No Content";
+    case 205: return "Reset Content";
+    case 206: return "Partial Content";
+    case 207: return "Multi-Status";                    /* RFC 2518 (WebDAV) */
+    case 208: return "Already Reported";              /* RFC 5842 */
+    case 300: return "Multiple Choices";
+    case 301: return "Moved Permanently";
+    case 302: return "Found";
+    case 303: return "See Other";
+    case 304: return "Not Modified";
+    case 305: return "Use Proxy";
+    case 307: return "Temporary Redirect";
+    case 400: return "Bad Request";
+    case 401: return "Unauthorized";
+    case 402: return "Payment Required";
+    case 403: return "Forbidden";
+    case 404: return "Not Found";
+    case 405: return "Method Not Allowed";
+    case 406: return "Not Acceptable";
+    case 407: return "Proxy Authentication Required";
+    case 408: return "Request Timeout";
+    case 409: return "Conflict";
+    case 410: return "Gone";
+    case 411: return "Length Required";
+    case 412: return "Precondition Failed";
+    case 413: return "Request Entity Too Large";
+    case 414: return "Request-URI Too Large";
+    case 415: return "Unsupported Media Type";
+    case 416: return "Request Range Not Satisfiable";
+    case 417: return "Expectation Failed";
+    case 418: return "I'm a teapot";              /* RFC 2324 */
+    case 422: return "Unprocessable Entity";            /* RFC 2518 (WebDAV) */
+    case 423: return "Locked";                          /* RFC 2518 (WebDAV) */
+    case 424: return "Failed Dependency";               /* RFC 2518 (WebDAV) */
+    case 425: return "No code";                         /* WebDAV Advanced Collections */
+    case 426: return "Upgrade Required";                /* RFC 2817 */
+    case 428: return "Precondition Required";
+    case 429: return "Too Many Requests";
+    case 431: return "Request Header Fields Too Large";
+    case 449: return "Retry with";                      /* unofficial Microsoft */
+    case 500: return "Internal Server Error";
+    case 501: return "Not Implemented";
+    case 502: return "Bad Gateway";
+    case 503: return "Service Unavailable";
+    case 504: return "Gateway Timeout";
+    case 505: return "HTTP Version Not Supported";
+    case 506: return "Variant Also Negotiates";         /* RFC 2295 */
+    case 507: return "Insufficient Storage";            /* RFC 2518 (WebDAV) */
+    case 509: return "Bandwidth Limit Exceeded";        /* unofficial */
+    case 510: return "Not Extended";                    /* RFC 2774 */
+    case 511: return "Network Authentication Required";
+    default: break;
+  }
+  /* default to the Nxx group names in RFC 2616 */
+  if (100 <= code && code <= 199) {
+    return "Informational";
+  }
+  else if (200 <= code && code <= 299) {
+    return "Success";
+    }
+    else if (300 <= code && code <= 399) {
+        return "Redirection";
+    }
+    else if (400 <= code && code <= 499) {
+        return "Client Error";
+    }
+    else {
+        return "Error";
+    }
+}
 
 /* stolen from HTTP::Parser::XS */
 static
@@ -77,6 +168,7 @@ int header_is(const struct phr_header* header, const char* name,
       return 0;
   return 1;
 }
+
 
 
 STATIC_INLINE
@@ -184,7 +276,7 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
         }
       }
       slot = hv_fetch(env, name, name_len, 1);
-      if ( !slot ) croak("failed to create hash entry");
+      if ( !slot ) croak("ERROR: failed to create hash entry");
       if (SvOK(*slot)) {
         sv_catpvn(*slot, ", ", 2);
         sv_catpvn(*slot, headers[i].value, headers[i].value_len);
@@ -483,7 +575,7 @@ read_timeout(fileno, rbuf, len, offset, timeout)
     ssize_t rv;
     ssize_t buf_len;
   CODE:
-    if (!SvROK(rbuf)) croak("buf must be RV");
+    if (!SvROK(rbuf)) croak("ERROR: buf must be RV");
     buf = SvRV(rbuf);
     if (!SvOK(buf)) {
       sv_setpvn(buf,"",0);
@@ -554,10 +646,11 @@ close_client(fileno)
     close(fileno);
 
 unsigned long
-write_psgi_response(fileno, timeout, headers, body)
+write_psgi_response(fileno, timeout, status_code, headers, body)
     int fileno
     double timeout
-    SV * headers
+    int status_code
+    AV * headers
     AV * body
   PREINIT:
     ssize_t rv;
@@ -568,13 +661,78 @@ write_psgi_response(fileno, timeout, headers, body)
     int count;
     int i;
     struct iovec * v;
+    char status_line[512];
+    int status_line_len;
+    char * key;
+    int date_pushed = 0;
+    char date_line[512];
+    int date_line_len;
+    struct tm gtm;
+    time_t lt;
   CODE:
-    iovcnt = 1 + av_len(body) + 1;
+    if( (av_len(headers)+1) % 2 == 1 ) croak("ERROR: Odd number of element in header");
+
+    iovcnt = 10 + (av_len(headers)+1)*2 + (av_len(body) + 1);
     {
       struct iovec v[iovcnt]; // Needs C99 compiler
-      v[0].iov_base = svpv2char(headers, &len);
-      v[0].iov_len = len;
-      iovcnt = 1;
+      /* status line */
+      iovcnt = 0;
+      status_line_len = sprintf(status_line,
+        "HTTP/1.0 %d %s\r\nConnection: close\r\n",
+        status_code, status_message(status_code) );
+      v[iovcnt].iov_base = status_line;
+      v[iovcnt].iov_len = status_line_len;
+      iovcnt++;
+
+      i=0;
+      date_pushed = 0;
+      while ( i < av_len(headers) + 1 ) {
+        /* key */
+        key = svpv2char(*av_fetch(headers,i,0), &len);
+        if ( strncasecmp(key,"Connection",len) == 0 ) {
+          i += 2;
+          continue;
+        }
+        if ( strncasecmp(key,"Date",len) == 0 ) {
+          date_pushed = 1;
+        }
+        v[iovcnt].iov_base = key;
+        v[iovcnt].iov_len = len;
+        iovcnt++;
+        v[iovcnt].iov_base = ": ";
+        v[iovcnt].iov_len = sizeof(": ") - 1;
+        iovcnt++;
+        i++;
+        /* value */
+        v[iovcnt].iov_base = svpv2char(*av_fetch(headers,i,0), &len);
+        v[iovcnt].iov_len = len;
+        iovcnt++;
+        v[iovcnt].iov_base = "\r\n";
+        v[iovcnt].iov_len = sizeof("\r\n") - 1;
+        iovcnt++;
+        i++;
+      }
+
+      if ( date_pushed == 0 ) {
+        time(&lt);
+        gmtime_r(&lt, &gtm);
+        date_line_len = sprintf(date_line,
+          "Date: %s, %02d %s %04d %02d:%02d:%02d GMT\r\n",
+          DoW[gtm.tm_wday],
+          gtm.tm_mday,
+          MoY[gtm.tm_mon],
+          gtm.tm_year + 1900,
+          gtm.tm_hour, gtm.tm_min, gtm.tm_sec
+        );
+        v[iovcnt].iov_base = date_line;
+        v[iovcnt].iov_len = date_line_len;
+        iovcnt++;
+      }
+
+      v[iovcnt].iov_base = "\r\n";
+      v[iovcnt].iov_len = sizeof("\r\n") - 1;
+      iovcnt++;
+
       for (i=0; i < av_len(body) + 1; i++ ) {
         if (!SvOK(*av_fetch(body,i,0))) {
           continue;

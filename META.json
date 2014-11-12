@@ -1,5 +1,5 @@
 {
-   "abstract" : "Preforked Plack::Handler for performance freaks",
+   "abstract" : "Preforked Plack Handler for performance freaks",
    "author" : [
       "Masahiro Nagano <kazeburo@gmail.com>"
    ],

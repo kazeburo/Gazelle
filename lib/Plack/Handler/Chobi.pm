@@ -208,28 +208,26 @@ sub _handle_response {
     my $headers = $res->[1];
     my $body = $res->[2];
     
-    my $lines = "Connection: close\015\012";
+    #my $lines = "Connection: close\015\012";
+    #my $send_date;
+    #for (my $i = 0; $i < @$headers; $i += 2) {
+    #    my $k = $headers->[$i];
+    #    my $v = $headers->[$i + 1];
+    #    my $lck = lc $k;
+    #    next if $lck eq 'connection';
+    #    $send_date = 1 if $lck eq 'date';
+    #    $lines .= "$k: $v\015\012";
+    #}
+    #if ( !$self->{disable_date_header} && ! $send_date ) {
+    #    $lines = "Date: ".time2str() . "\015\012$lines";
+    #}
+    #$lines = "HTTP/1.0 $status_code ".status_message($status_code)."\015\012$lines\015\012";
 
-    my $send_date;
-    for (my $i = 0; $i < @$headers; $i += 2) {
-        my $k = $headers->[$i];
-        my $v = $headers->[$i + 1];
-        my $lck = lc $k;
-        next if $lck eq 'connection';
-        $send_date = 1 if $lck eq 'date';
-        $lines .= "$k: $v\015\012";
-    }
-
-    if ( !$self->{disable_date_header} && ! $send_date ) {
-        $lines = "Date: ".time2str() . "\015\012$lines";
-    }
-    
-    $lines = "HTTP/1.0 $status_code ".status_message($status_code)."\015\012$lines\015\012";
     if (defined $body && ref $body eq 'ARRAY' ) {
-        write_psgi_response($conn, $self->{timeout}, $lines, $body);
+        write_psgi_response($conn, $self->{timeout}, $status_code, $headers , $body);
         return;
     }
-    write_all($conn, $lines, 0, $self->{timeout}) or return;
+    write_psgi_response($conn, $self->{timeout}, $status_code, $headers , []) or return;
 
     if (defined $body) {
         my $failed;
@@ -261,7 +259,7 @@ __END__
 
 =head1 NAME
 
-Plack::Handler::Chobi - Preforked Plack::Handler for performance freaks
+Plack::Handler::Chobi - Preforked Plack Handler for performance freaks
 
 =head1 SYNOPSIS
 
@@ -270,9 +268,10 @@ Plack::Handler::Chobi - Preforked Plack::Handler for performance freaks
 
 =head1 DESCRIPTION
 
-Plack::Handler::Chobi is a PSGI Handler based on Starlet code. Many code was rewritten and optimized by XS.
+Plack::Handler::Chobi is a PSGI Handler. It's created based on L<Starlet> code. 
+Many code was rewritten and optimized by XS.
 
-Plack::Handler::Chobi's supports and does not support follwing freatures.
+Plack::Handler::Chobi's supports follwing freatures.
 
 - only supports HTTP/1.0. But Chobi does not support Keepalive.
 
@@ -284,9 +283,34 @@ Plack::Handler::Chobi's supports and does not support follwing freatures.
 
 - prefork and graceful shutdown using Parallel::Prefork
 
-- hot deploy using Server::Starter
+- hot deploy and unix domain socket using Server::Starter
 
 Chobi is suitable for running HTTP application servers behind a reverse proxy link nginx.
+
+=head1 SAMPLE CONFIGURATION WITH NGINX
+
+nginx.conf
+
+  http {
+    upstream app {
+      server unix:/path/to/app.sock;
+    }
+    server {
+      location / {
+        proxy_pass http://app;
+      }
+      location ~ ^/(stylesheets|images)/ {
+        root /path/to/webapp/public;
+      }
+    }
+  }
+
+comannd line of running Chobi
+
+  $ start_server --path /path/to/app.sock --backlog 16384 -- plackup -s Chobi \
+    -workers=20 --max-reqs-per-child 1000 --min-reqs-per-child 800 -E production -a app.psgi
+
+start_server is bundled with L<Server::Starter>
 
 =head1 COMMAND LINE OPTIONS
 
