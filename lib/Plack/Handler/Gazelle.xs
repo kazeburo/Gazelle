@@ -515,7 +515,7 @@ PPCODE:
     if ( tcp == 1 ) {
       setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
       (void)hv_stores(env,"REMOTE_ADDR",newSVpv(inet_ntoa(cliaddr.sin_addr),0));
-      (void)hv_stores(env,"REMOTE_PORT",newSViv(cliaddr.sin_port));
+      (void)hv_stores(env,"REMOTE_PORT",newSViv(ntohs(cliaddr.sin_port)));
     }
     else {
       (void)hv_stores(env,"REMOTE_ADDR",newSV(0));
