@@ -230,6 +230,8 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
     &minor_version, headers, &num_headers, 0
   );
 
+  warn("read http req buf_len:%zd ret:%d\n", buf_len, ret); /* test */
+
   if (ret < 0)
     goto done;
 
@@ -525,11 +527,10 @@ PPCODE:
     (void)hv_stores(env,"SERVER_PORT",SvREFCNT_inc(port));
     (void)hv_stores(env,"SERVER_NAME",SvREFCNT_inc(host));
 
-    warn("read http req %zd\n", rv); /* test */
-
     buf_len = rv;
     while (1) {
       reqlen = _parse_http_request(aTHX_ &read_buf[0],buf_len,env);
+      warn("readed http retlen:%zd\n", reqlen); /* test */
       if ( reqlen >= 0 ) {
         break;
       }
