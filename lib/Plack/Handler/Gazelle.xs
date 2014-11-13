@@ -306,12 +306,12 @@ svpv2char(pTHX_ SV *sv, STRLEN *lp)
 
 STATIC_INLINE
 int
-_accept(int fileno, struct sockaddr *addr, socklen_t *addrlen) {
+_accept(int fileno, struct sockaddr *addr, unsigned int addrlen) {
     int fd;
 #ifdef SOCK_NONBLOCK
-    fd = accept4(fileno, addr, addrlen, SOCK_CLOEXEC|SOCK_NONBLOCK);
+    fd = accept4(fileno, addr, &addrlen, SOCK_CLOEXEC|SOCK_NONBLOCK);
 #else
-    fd = accept(fileno, addr, addrlen);
+    fd = accept(fileno, addr, &addrlen);
 #endif
     if (fd < 0) {
       return fd;
@@ -486,7 +486,7 @@ accept_psgi(fileno, timeout, tcp, host, port)
 PREINIT:
     int fd;
     struct sockaddr_in cliaddr;
-    socklen_t len = sizeof(cliaddr);
+    unsigned int len;
     char read_buf[MAX_HEADER_SIZE];
     HV * env;
     int flag = 1;
@@ -497,7 +497,8 @@ PPCODE:
 {
     /* if ( my ($conn, $buf, $env) = accept_buffer(fileno($server),timeout,tcp,host,port) */
 
-    fd = _accept(fileno, (struct sockaddr *)&cliaddr, &len);
+    len = sizeof(cliaddr);
+    fd = _accept(fileno, (struct sockaddr *)&cliaddr, len);
     /* endif */
     if (fd < 0) {
       goto badexit;
