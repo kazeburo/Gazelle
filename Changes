@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.03 2014-11-13T07:30:29Z
+
+    - use older pichttpparser
+
 0.02 2014-11-13T02:57:35Z
 
     - fix install problem. mv ppport.h to rootdir
