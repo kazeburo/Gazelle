@@ -230,8 +230,6 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
     &minor_version, headers, &num_headers, 0
   );
 
-  warn("read http req buf_len:%zd ret:%d\n", buf_len, ret); /* test */
-
   if (ret < 0)
     goto done;
 
@@ -530,7 +528,6 @@ PPCODE:
     buf_len = rv;
     while (1) {
       reqlen = _parse_http_request(aTHX_ &read_buf[0],buf_len,env);
-      warn("readed http retlen:%zd\n", reqlen); /* test */
       if ( reqlen >= 0 ) {
         break;
       }
