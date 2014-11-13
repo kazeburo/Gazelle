@@ -525,6 +525,8 @@ PPCODE:
     (void)hv_stores(env,"SERVER_PORT",SvREFCNT_inc(port));
     (void)hv_stores(env,"SERVER_NAME",SvREFCNT_inc(host));
 
+    warn("read http req %zd\n", rv); /* test */
+
     buf_len = rv;
     while (1) {
       reqlen = _parse_http_request(aTHX_ &read_buf[0],buf_len,env);
