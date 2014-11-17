@@ -194,7 +194,6 @@ sub _calc_minmax_per_child {
     my $self = shift;
     my ($max,$min) = @_;
     if (defined $min) {
-        srand((rand() * 2 ** 30) ^ $$ ^ time);
         return $max - int(($max - $min + 1) * rand);
     } else {
         return $max;
