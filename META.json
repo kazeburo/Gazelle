@@ -76,6 +76,7 @@
    "version" : "0.03",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
-      "mattn <mattn.jp@gmail.com>"
+      "mattn <mattn.jp@gmail.com>",
+      "bayashi <bayashi@cpan.org>"
    ]
 }
