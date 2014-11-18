@@ -200,7 +200,7 @@ store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
       d[dlen++] = src[i];
     }
   }
-
+  d[dlen] = '\0';
   SvCUR_set(dst, dlen);
   SvPOK_only(dst);
   (void)hv_stores(env, "PATH_INFO", dst);
