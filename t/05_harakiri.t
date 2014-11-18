@@ -37,6 +37,7 @@ test_psgi
             $seen_pid{$res->content}++;
         }
         is keys(%seen_pid), 23, 'In Harakiri mode, each pid only used once';
+        sleep 1;
     };
 
 done_testing;
