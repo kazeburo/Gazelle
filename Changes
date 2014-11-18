@@ -2,6 +2,11 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.05 2014-11-18T04:24:06Z
+
+    - add Server header
+    - add some tests
+
 0.04 2014-11-18T01:33:24Z
 
     - update picohttpparser. fixed infinite loop problem
