@@ -57,7 +57,8 @@
             "HTTP::Request::Common" : "0",
             "Plack::Test" : "0",
             "Plack::Test::Suite" : "0",
-            "Test::More" : "0.98"
+            "Test::More" : "0.98",
+            "Test::TCP" : "2"
          }
       }
    },
