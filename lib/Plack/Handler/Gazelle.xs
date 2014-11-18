@@ -200,8 +200,8 @@ store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
       d[dlen++] = src[i];
     }
   }
-  d[dlen] = '\0';
   SvCUR_set(dst, dlen);
+  *SvEND(dst) = '\0';
   SvPOK_only(dst);
   (void)hv_stores(env, "PATH_INFO", dst);
 }
@@ -588,6 +588,7 @@ read_timeout(fileno, rbuf, len, offset, timeout)
     d = SvGROW(buf, buf_len + len);
     rv = _read_timeout(fileno, timeout, &d[offset], len);
     SvCUR_set(buf, (rv > 0) ? rv + buf_len : buf_len);
+    *SvEND(buf) = '\0';
     SvPOK_only(buf);
     if (rv < 0) XSRETURN_UNDEF;
     RETVAL = (unsigned long)rv;
