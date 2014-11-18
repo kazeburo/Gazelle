@@ -10,6 +10,7 @@ requires 'Guard';
 
 on 'test' => sub {
     requires 'Test::More', '0.98';
+    requires 'Test::TCP', 2;
     requires 'HTTP::Request::Common';
     requires 'Plack::Test::Suite';
     requires 'Plack::Test';
