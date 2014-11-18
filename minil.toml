@@ -4,3 +4,5 @@ authority="cpan:KAZEBURO"
 
 module_maker="ModuleBuildTiny"
 
+[FileGatherer]
+exclude_match = ['^picohttpparser/picotest']
