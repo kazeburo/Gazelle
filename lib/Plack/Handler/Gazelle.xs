@@ -680,7 +680,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       /* status line */
       iovcnt = 0;
       status_line_len = sprintf(status_line,
-        "HTTP/1.0 %d %s\r\nConnection: close\r\n",
+        "HTTP/1.0 %d %s\r\nConnection: close\r\nServer: gazelle\r\n",
         status_code, status_message(status_code) );
       v[iovcnt].iov_base = status_line;
       v[iovcnt].iov_len = status_line_len;
@@ -694,6 +694,9 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
         if ( strncasecmp(key,"Connection",len) == 0 ) {
           i += 2;
           continue;
+        }
+        if ( strncasecmp(key,"Server",len) == 0 ) {
+          v[0].iov_len -= (sizeof("Server: gazelle\r\n") - 1);
         }
         if ( strncasecmp(key,"Date",len) == 0 ) {
           date_pushed = 1;
