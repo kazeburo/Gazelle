@@ -8,12 +8,9 @@ use Test::More;
 $Plack::Test::Impl = 'Server';
 $ENV{PLACK_SERVER} = 'Gazelle';
 
-warn $$;
-
 test_psgi
     app => sub {
         my $env = shift;
-        warn $$;
         unless (my $pid = fork) {
             die "fork failed:$!"
                 unless defined $pid;
@@ -27,7 +24,6 @@ test_psgi
     },
     client => sub {
         my $cb = shift;
-        warn $$;
         my $res = $cb->(GET "/");
         is $res->content, "hello world";
     };
