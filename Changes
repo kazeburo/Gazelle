@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.06 2014-11-18T08:02:38Z
+
+    - fix path_info. add 0 terminate
+
 0.05 2014-11-18T04:24:06Z
 
     - add Server header

@@ -18,7 +18,7 @@ use Guard;
 use HTTP::Status;
 use HTTP::Date;
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
