@@ -47,7 +47,6 @@
             "Plack" : "0",
             "Server::Starter" : "0",
             "Stream::Buffered" : "0",
-            "Time::HiRes" : "0",
             "Try::Tiny" : "0",
             "perl" : "5.008005"
          }
