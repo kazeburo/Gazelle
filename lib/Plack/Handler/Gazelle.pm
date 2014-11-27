@@ -1,9 +1,8 @@
 package Plack::Handler::Gazelle;
 
-use 5.008005;
+use 5.008001;
 use strict;
 use warnings;
-use Carp ();
 use IO::Socket::INET;
 use Plack::Util;
 use Stream::Buffered;
@@ -13,8 +12,6 @@ use Parallel::Prefork;
 use Server::Starter ();
 use Try::Tiny;
 use Guard;
-use HTTP::Status;
-use HTTP::Date;
 
 our $VERSION = "0.06";
 

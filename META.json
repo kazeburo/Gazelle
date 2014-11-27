@@ -48,7 +48,7 @@
             "Server::Starter" : "0",
             "Stream::Buffered" : "0",
             "Try::Tiny" : "0",
-            "perl" : "5.008005"
+            "perl" : "5.008001"
          }
       },
       "test" : {
