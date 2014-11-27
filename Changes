@@ -2,6 +2,11 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.07 2014-11-27T03:56:03Z
+
+    - has compatibility with HTTP::Parser::XS
+    - fix failed test in FreeBSD
+
 0.06 2014-11-18T08:02:38Z
 
     - fix path_info. add 0 terminate
