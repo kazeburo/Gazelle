@@ -3,6 +3,8 @@ use warnings;
 use Plack::Loader;
 use Test::More;
 use Test::TCP;
+use IO::Socket::INET;
+use IO::Select;
 
 my $req1 = "GET /foo/bar HTTP/1.1\r\nHost: example.com\r\n\r\n";
 my $req2 = "GET /foo/プラック HTTP/1.1\r\nHost: example.com\r\nReferer: http://example.com/\r\n\r\n";
