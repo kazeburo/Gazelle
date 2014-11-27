@@ -172,8 +172,7 @@ int header_is(const struct phr_header* header, const char* name,
 
 
 STATIC_INLINE
-void
-store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
+int store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
   size_t dlen = 0, i = 0;
   char *d;
   char s2, s3;
@@ -184,7 +183,10 @@ store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
   d = SvGROW(dst, src_len * 3 + 1);
 
   for (i = 0; i < src_len; i++ ) {
-    if ( src[i] == '%' && isxdigit(src[i+1]) && isxdigit(src[i+2]) ) {
+    if ( src[i] == '%' ) {
+      if ( !isxdigit(src[i+1]) || !isxdigit(src[i+2]) ) {
+        return -1;
+      }
       s2 = src[i+1];
       s3 = src[i+2];
       s2 -= s2 <= '9' ? '0'
@@ -204,6 +206,7 @@ store_path_info(pTHX_ HV* env, const char* src, size_t src_len) {
   *SvEND(dst) = '\0';
   SvPOK_only(dst);
   (void)hv_stores(env, "PATH_INFO", dst);
+  return 1;
 }
 
 
@@ -241,7 +244,11 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   /* PATH_INFO QUERY_STRING */
   path_len = find_ch(path, path_len, '#'); /* strip off all text after # after storing request_uri */
   question_at = find_ch(path, path_len, '?');
-  store_path_info(aTHX_ env, path, question_at);
+  if ( store_path_info(aTHX_ env, path, question_at) < 0 ) {
+    hv_clear(env);
+    ret = -1;
+    goto done;
+  }
   if (question_at != path_len) ++question_at;
   (void)hv_stores(env, "QUERY_STRING", newSVpvn(path + question_at, path_len - question_at));
 
