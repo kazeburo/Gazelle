@@ -235,11 +235,17 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
 
   if (ret < 0)
     goto done;
+  if (minor_version > 1 || minor_version < 0 ) {
+    ret = -1;
+    goto done;
+  }
 
   (void)hv_stores(env, "REQUEST_METHOD", newSVpvn(method, method_len));
   (void)hv_stores(env, "REQUEST_URI", newSVpvn(path, path_len));
   (void)hv_stores(env, "SCRIPT_NAME", newSVpvn("", 0));
-  (void)hv_stores(env, "SERVER_PROTOCOL", newSVpvf("HTTP/1.%d", minor_version));
+  strcpy(tmp, "HTTP/1.");
+  tmp[sizeof("HTTP/1.")-1] = '0' + minor_version;
+  (void)hv_stores(env, "SERVER_PROTOCOL", newSVpvn(tmp, sizeof("HTTP/1.0")-1));
 
   /* PATH_INFO QUERY_STRING */
   path_len = find_ch(path, path_len, '#'); /* strip off all text after # after storing request_uri */
@@ -418,6 +424,67 @@ _write_timeout(const int fileno, const double timeout, char * write_buf, const i
       }
     }
     goto DO_WRITE;
+}
+
+STATIC_INLINE
+void
+str_s(char * dst, int *dst_len, const char * src, int src_len) {
+  int i;
+  int dlen = *dst_len;
+  for ( i=0; i<src_len; i++) {
+    dst[dlen++] = src[i];
+  }
+  *dst_len = dlen;
+}
+
+
+STATIC_INLINE
+void
+str_i(char * dst, int * dst_len, int src, int fig) {
+  int dlen = *dst_len + fig - 1;
+  do {
+    dst[dlen] = '0' + (src % 10);
+    dlen--;
+    src /= 10;
+  } while( dlen >= *dst_len );
+  *dst_len += fig;
+}
+
+
+STATIC_INLINE
+int _date_line(char * date_line) {
+    struct tm gtm;
+    time_t lt;
+    int i = 0;
+    time(&lt);
+    gmtime_r(&lt, &gtm);
+    date_line[i++] = 'D';
+    date_line[i++] = 'a';
+    date_line[i++] = 't';
+    date_line[i++] = 'e';
+    date_line[i++] = ':';
+    date_line[i++] = ' ';
+    str_s(date_line, &i, DoW[gtm.tm_wday], 3);
+    date_line[i++] = ',';
+    date_line[i++] = ' ';
+    str_i(date_line, &i, gtm.tm_mday, 2);
+    date_line[i++] = ' ';
+    str_s(date_line, &i, MoY[gtm.tm_mon], 3);
+    date_line[i++] = ' ';
+    str_i(date_line, &i, gtm.tm_year + 1900, 4);
+    date_line[i++] = ' ';
+    str_i(date_line, &i, gtm.tm_hour,2);
+    date_line[i++] = ':';
+    str_i(date_line, &i, gtm.tm_min,2);
+    date_line[i++] = ':';
+    str_i(date_line, &i, gtm.tm_sec,2);
+    date_line[i++] = ' ';
+    date_line[i++] = 'G';
+    date_line[i++] = 'M';
+    date_line[i++] = 'T';
+    date_line[i++] = 13;
+    date_line[i++] = 10;
+    return i;
 }
 
 
@@ -672,13 +739,11 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
     int i;
     struct iovec * v;
     char status_line[512];
-    int status_line_len;
+    char date_line[512];
     char * key;
     int date_pushed = 0;
-    char date_line[512];
-    int date_line_len;
-    struct tm gtm;
-    time_t lt;
+
+
   CODE:
     if( (av_len(headers)+1) % 2 == 1 ) croak("ERROR: Odd number of element in header");
 
@@ -687,11 +752,28 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       struct iovec v[iovcnt]; // Needs C99 compiler
       /* status line */
       iovcnt = 0;
-      status_line_len = sprintf(status_line,
-        "HTTP/1.0 %d %s\r\nConnection: close\r\nServer: gazelle\r\n",
-        status_code, status_message(status_code) );
+      i=0;
+      status_line[i++] = 'H';
+      status_line[i++] = 'T';
+      status_line[i++] = 'T';
+      status_line[i++] = 'P';
+      status_line[i++] = '/';
+      status_line[i++] = '1';
+      status_line[i++] = '.';
+      status_line[i++] = '0';
+      status_line[i++] = ' ';
+      str_i(status_line,&i,status_code,3);
+      status_line[i++] = ' ';
+      const char * message = status_message(status_code);
+      str_s(status_line,&i, message, strlen(message));
+      status_line[i++] = 13;
+      status_line[i++] = 10;
       v[iovcnt].iov_base = status_line;
-      v[iovcnt].iov_len = status_line_len;
+      v[iovcnt].iov_len = i;
+      iovcnt++;
+
+      v[iovcnt].iov_base = "Connection: close\r\nServer: gazelle\r\n";
+      v[iovcnt].iov_len = sizeof("Connection: close\r\nServer: gazelle\r\n")-1;
       iovcnt++;
 
       i=0;
@@ -704,7 +786,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
           continue;
         }
         if ( strncasecmp(key,"Server",len) == 0 ) {
-          v[0].iov_len -= (sizeof("Server: gazelle\r\n") - 1);
+          v[1].iov_len -= (sizeof("Server: gazelle\r\n") - 1);
         }
         if ( strncasecmp(key,"Date",len) == 0 ) {
           date_pushed = 1;
@@ -727,25 +809,14 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       }
 
       if ( date_pushed == 0 ) {
-        time(&lt);
-        gmtime_r(&lt, &gtm);
-        date_line_len = sprintf(date_line,
-          "Date: %s, %02d %s %04d %02d:%02d:%02d GMT\r\n\r\n",
-          DoW[gtm.tm_wday],
-          gtm.tm_mday,
-          MoY[gtm.tm_mon],
-          gtm.tm_year + 1900,
-          gtm.tm_hour, gtm.tm_min, gtm.tm_sec
-        );
+        v[iovcnt].iov_len = _date_line(date_line);
         v[iovcnt].iov_base = date_line;
-        v[iovcnt].iov_len = date_line_len;
         iovcnt++;
       }
-      else {
-        v[iovcnt].iov_base = "\r\n";
-        v[iovcnt].iov_len = sizeof("\r\n") - 1;
-        iovcnt++;
-      }
+
+      v[iovcnt].iov_base = "\r\n";
+      v[iovcnt].iov_len = sizeof("\r\n") - 1;
+      iovcnt++;
 
       for (i=0; i < av_len(body) + 1; i++ ) {
         if (!SvOK(*av_fetch(body,i,0))) {
