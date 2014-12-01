@@ -4,7 +4,7 @@ use 5.008001;
 use strict;
 use warnings;
 
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 
 1;
 
@@ -40,7 +40,7 @@ Gazelle supports following features.
 
 - hot deploy and unix domain socket using Server::Starter
 
-Gazelle is suitable for running HTTP application servers behind a reverse proxy link nginx.
+Gazelle is suitable for running HTTP application servers behind a reverse proxy like nginx.
 
 Benchmark is here. https://github.com/kazeburo/Gazelle/wiki/Benchmark
 
