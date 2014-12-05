@@ -17,7 +17,10 @@ test_tcp(
             my $env = shift;
             my $body='';
             for (keys %$env) {
-                $body .= "$_\t".$env->{$_}."\n" if $_ !~ m![a-z]! and $_ !~ m!^(REMOTE|SERVER)_(HOST|PORT|ADDR|NAME)$!;
+                $body .= "$_\t".$env->{$_}."\n"
+                    if $_ !~ m![a-z]! 
+                   and $_ !~ m!^(REMOTE|SERVER)_(HOST|PORT|ADDR|NAME)$!
+                   and $_ ne "HTTP_X_FORWARDED_FOR";
             }
             [ 200, [ 'Content-Type' => 'text/plain' ], [ $body ] ]
         });
