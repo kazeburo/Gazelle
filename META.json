@@ -73,7 +73,7 @@
          "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
-   "version" : "0.08",
+   "version" : "0.10",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "mattn <mattn.jp@gmail.com>",

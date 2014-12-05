@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.10 2014-12-05T05:45:09Z
+
+  - fix test. failed test if there is transparent proxy.
+
 0.08 2014-12-01T08:56:40Z
 
    - optimize. 2-5% increase performance
