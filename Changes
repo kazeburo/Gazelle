@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.11 2014-12-25T06:58:30Z
+
+  - tweek header order
+
 0.10 2014-12-05T05:45:09Z
 
   - fix test. failed test if there is transparent proxy.
