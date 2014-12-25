@@ -77,6 +77,7 @@
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "mattn <mattn.jp@gmail.com>",
-      "bayashi <bayashi@cpan.org>"
+      "bayashi <bayashi@cpan.org>",
+      "Syohei YOSHIDA <syohex@gmail.com>"
    ]
 }

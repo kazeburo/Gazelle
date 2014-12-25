@@ -21,11 +21,13 @@ test_psgi
         ok( $res->is_success );
         unlike( scalar $res->header('Server'), qr/gazelle/ );
         like( scalar $res->header('Server'), qr/Hello/ );
+        like( scalar $res->header('Date'), qr/Fooo/ );
     },
     app => sub {
         my $env = shift;
         my @headers = ('Content-Type','text/html');
         push @headers, 'Server', 'Hello' if $env->{QUERY_STRING};
+        push @headers, 'Date', 'Fooo' if $env->{QUERY_STRING};
         [200, \@headers, ['HELLO']];
     };
 

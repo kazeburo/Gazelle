@@ -337,7 +337,6 @@ _accept(int fileno, struct sockaddr *addr, unsigned int addrlen) {
 }
 
 
-
 STATIC_INLINE
 ssize_t
 _writev_timeout(const int fileno, const double timeout, struct iovec *iovec, const int iovcnt, const int do_select ) {
@@ -740,9 +739,14 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
     struct iovec * v;
     char status_line[512];
     char date_line[512];
+    char server_line[1032];
     char * key;
+    char * val;
+    STRLEN val_len;
     int date_pushed = 0;
-
+    const char * s;
+    char* d;
+    ssize_t n;
 
   CODE:
     if( (av_len(headers)+1) % 2 == 1 ) croak("ERROR: Odd number of element in header");
@@ -772,8 +776,11 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       v[iovcnt].iov_len = i;
       iovcnt++;
 
-      v[iovcnt].iov_base = "Connection: close\r\nServer: gazelle\r\n";
-      v[iovcnt].iov_len = sizeof("Connection: close\r\nServer: gazelle\r\n")-1;
+      /* for date header */
+      iovcnt++;
+
+      v[iovcnt].iov_base = "Server: gazelle\r\n";
+      v[iovcnt].iov_len = sizeof("Server: gazelle\r\n")-1;
       iovcnt++;
 
       i=0;
@@ -781,15 +788,37 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       while ( i < av_len(headers) + 1 ) {
         /* key */
         key = svpv2char(aTHX_ *av_fetch(headers,i,0), &len);
+        i++;
         if ( strncasecmp(key,"Connection",len) == 0 ) {
-          i += 2;
+          i++;
+          continue;
+        }
+
+        val = svpv2char(aTHX_ *av_fetch(headers,i,0), &val_len);
+        i++;
+
+        if ( strncasecmp(key,"Date",len) == 0 ) {
+          strcpy(date_line, "Date: ");
+          for ( s=val, n = val_len, d=date_line+sizeof("Date: ")-1; n !=0; s++, --n, d++) {
+            *d = *s;
+          }
+          date_line[sizeof("Date: ") -1 + val_len] = 13;
+          date_line[sizeof("Date: ") -1 + val_len + 1] = 10;
+          v[1].iov_base = date_line;
+          v[1].iov_len = sizeof("Date: ") -1 + val_len + 2;
+          date_pushed = 1;
           continue;
         }
         if ( strncasecmp(key,"Server",len) == 0 ) {
-          v[1].iov_len -= (sizeof("Server: gazelle\r\n") - 1);
-        }
-        if ( strncasecmp(key,"Date",len) == 0 ) {
-          date_pushed = 1;
+          strcpy(server_line, "Server: ");
+          for ( s=val, n = val_len, d=server_line+sizeof("Server: ")-1; n !=0; s++, --n, d++) {
+            *d = *s;
+          }
+          server_line[sizeof("Server: ") -1 + val_len] = 13;
+          server_line[sizeof("Server: ") -1 + val_len + 1] = 10;
+          v[2].iov_base = server_line;
+          v[2].iov_len = sizeof("Server: ") -1 + val_len + 2;
+          continue;
         }
         v[iovcnt].iov_base = key;
         v[iovcnt].iov_len = len;
@@ -797,25 +826,22 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
         v[iovcnt].iov_base = ": ";
         v[iovcnt].iov_len = sizeof(": ") - 1;
         iovcnt++;
-        i++;
         /* value */
-        v[iovcnt].iov_base = svpv2char(aTHX_ *av_fetch(headers,i,0), &len);
-        v[iovcnt].iov_len = len;
+        v[iovcnt].iov_base = val;
+        v[iovcnt].iov_len = val_len;
         iovcnt++;
         v[iovcnt].iov_base = "\r\n";
         v[iovcnt].iov_len = sizeof("\r\n") - 1;
         iovcnt++;
-        i++;
       }
 
       if ( date_pushed == 0 ) {
-        v[iovcnt].iov_len = _date_line(date_line);
-        v[iovcnt].iov_base = date_line;
-        iovcnt++;
+        v[1].iov_len = _date_line(date_line);
+        v[1].iov_base = date_line;
       }
 
-      v[iovcnt].iov_base = "\r\n";
-      v[iovcnt].iov_len = sizeof("\r\n") - 1;
+      v[iovcnt].iov_base = "Connection: close\r\n\r\n";
+      v[iovcnt].iov_len = sizeof("Connection: close\r\n\r\n") - 1;
       iovcnt++;
 
       for (i=0; i < av_len(body) + 1; i++ ) {
