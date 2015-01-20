@@ -48,6 +48,7 @@ extern "C" {
 #define MAX_HEADER_SIZE 16384
 #define MAX_HEADER_NAME_LEN 1024
 #define MAX_HEADERS         128
+#define READ_BUFSZ 16384
 #define BAD_REQUEST "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request\r\n"
 
 #define TOU(ch) (('a' <= ch && ch <= 'z') ? ch - ('a' - 'A') : ch)
@@ -658,6 +659,9 @@ read_timeout(fileno, rbuf, len, offset, timeout)
     SvUPGRADE(buf, SVt_PV);
     SvPV_nolen(buf);
     buf_len = SvCUR(buf);
+    if ( len > READ_BUFSZ ) {
+      len = READ_BUFSZ;
+    }
     d = SvGROW(buf, buf_len + len);
     rv = _read_timeout(fileno, timeout, &d[offset], len);
     SvCUR_set(buf, (rv > 0) ? rv + buf_len : buf_len);
