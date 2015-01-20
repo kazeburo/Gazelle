@@ -58,7 +58,7 @@ sub new {
         max_workers          => $max_workers,
         min_reqs_per_child   => (
             defined $args{min_reqs_per_child}
-                ? $args{min_reqs_per_child} : undef,
+            ? $args{min_reqs_per_child} : undef,
         ),
         max_reqs_per_child   => (
             $args{max_reqs_per_child} || $args{max_requests} || 1000,
@@ -66,7 +66,7 @@ sub new {
         spawn_interval       => $args{spawn_interval} || 0,
         err_respawn_interval => (
             defined $args{err_respawn_interval}
-                ? $args{err_respawn_interval} : undef,
+            ? $args{err_respawn_interval} : undef,
         ),
     }, $class;
 
@@ -129,7 +129,6 @@ sub run {
                 exit 0
                     if ( $self->{can_exit} || $self->{term_received} > 1 );
             };
-            
             local $SIG{PIPE} = 'IGNORE';
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
@@ -169,8 +168,8 @@ sub run {
                         $self->_handle_response($res, $conn);
                     } elsif (ref $res eq 'CODE') {
                         $res->(sub {
-                                   $self->_handle_response($_[0], $conn);
-                               });
+                            $self->_handle_response($_[0], $conn);
+                        });
                     } else {
                         die "Bad response $res";
                     }
@@ -183,7 +182,6 @@ sub run {
     }
     $pm->wait_all_children;
 }
-
 
 sub _calc_minmax_per_child {
     my $self = shift;
