@@ -164,14 +164,14 @@ sub run {
                         my $chunk_buffer = '';
                         my $length;
                     DECHUNK: while(1) {
-                            my $chunk;
+                            my $chunk = "";
                             if ( length $buf ) {
                                 $chunk = $buf;
                                 $buf = '';
                             }
                             else {
                                 read_timeout(
-                                    $conn, \$chunk, $cl, 0, $self->{timeout})
+                                    $conn, \$chunk, 16384, 0, $self->{timeout})
                                     or next PROC_LOOP;
                             }
 
@@ -246,7 +246,7 @@ sub _handle_response {
             sub {
                 unless ($failed) {
                     if ( $use_chunked ) {
-                        my $len = length $_[0];
+                        my $len = length $_[0] or return;
                         write_all($conn, sprintf('%x',$len)."\015\012".$_[0]."\015\012", 0, $self->{timeout})
                             or $failed = 1;
                     }
@@ -262,7 +262,7 @@ sub _handle_response {
         return Plack::Util::inline_object
             write => sub {
                 if ( $use_chunked ) {
-                    my $len = length $_[0];
+                    my $len = length $_[0] or return;
                     write_all($conn, sprintf('%x',$len)."\015\012".$_[0]."\015\012", 0, $self->{timeout});
                 }
                 else {
