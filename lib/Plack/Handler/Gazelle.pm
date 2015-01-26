@@ -244,17 +244,15 @@ sub _handle_response {
         Plack::Util::foreach(
             $body,
             sub {
-                unless ($failed) {
-                    if ( $use_chunked ) {
-                        my $len = length $_[0] or return;
-                        write_all($conn, sprintf('%x',$len)."\015\012".$_[0]."\015\012", 0, $self->{timeout})
-                            or $failed = 1;
-                    }
-                    else {
-                        write_all($conn, $_[0], 0, $self->{timeout})
-                            or $failed = 1;
-                    }
+                return if $failed;
+                my $ret;
+                if ( $use_chunked ) {
+                    $ret = write_chunk($conn, $_[0], 0, $self->{timeout});
                 }
+                else {
+                    $ret = write_all($conn, $_[0], 0, $self->{timeout});
+                }
+                $failed = 1 if ! defined $ret;
             },
         );
         write_all($conn, "0\015\012\015\012", 0, $self->{timeout}) if $use_chunked;
@@ -262,8 +260,7 @@ sub _handle_response {
         return Plack::Util::inline_object
             write => sub {
                 if ( $use_chunked ) {
-                    my $len = length $_[0] or return;
-                    write_all($conn, sprintf('%x',$len)."\015\012".$_[0]."\015\012", 0, $self->{timeout});
+                    write_chunk($conn, $_[0], 0, $self->{timeout});
                 }
                 else {
                     write_all($conn, $_[0], 0, $self->{timeout});

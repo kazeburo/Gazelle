@@ -727,6 +727,72 @@ write_timeout(fileno, buf, len, offset, timeout)
     RETVAL
 
 unsigned long
+write_chunk(fileno, buf, offset, timeout)
+    int fileno
+    SV * buf
+    ssize_t offset
+    double timeout
+  PREINIT:
+    char *d;
+    ssize_t buf_len;
+    ssize_t rv = 0;
+    ssize_t written = 0;
+    ssize_t vec_offset = 0;
+    int count =0;
+    ssize_t iovcnt = 3;
+    char chunked_header_buf[18];
+  CODE:
+    if ( !SvOK(buf) ) {
+      RETVAL = 0;
+      return;
+    }
+    SvUPGRADE(buf, SVt_PV);
+    d = SvPV_nolen(buf);
+    buf_len = SvCUR(buf);
+    if ( buf_len == 0 ){
+      RETVAL = 0;
+      return;
+    }
+
+    {
+      struct iovec v[iovcnt]; // Needs C99 compiler
+      v[0].iov_len = _chunked_header(chunked_header_buf,buf_len);
+      v[0].iov_base = chunked_header_buf;
+      v[1].iov_len = buf_len;
+      v[1].iov_base = d;
+      v[2].iov_base = "\r\n";
+      v[2].iov_len = sizeof("\r\n") -1;
+
+      vec_offset = 0;
+      written = 0;
+      while ( iovcnt - vec_offset > 0 ) {
+        count = (iovcnt > IOV_MAX) ? IOV_MAX : iovcnt;
+        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count - vec_offset, (vec_offset == 0) ? 0 : 1);
+        if ( rv <= 0 ) {
+          // error or disconnected
+          break;
+        }
+        written += rv;
+        while ( rv > 0 ) {
+          if ( (unsigned int)rv >= v[vec_offset].iov_len ) {
+            rv -= v[vec_offset].iov_len;
+            vec_offset++;
+          }
+          else {
+            v[vec_offset].iov_base = (char*)v[vec_offset].iov_base + rv;
+            v[vec_offset].iov_len -= rv;
+            rv = 0;
+          }
+        }
+      }
+    }
+
+    if (rv < 0) XSRETURN_UNDEF;
+    RETVAL = (unsigned long)written;
+  OUTPUT:
+    RETVAL
+
+unsigned long
 write_all(fileno, buf, offset, timeout)
     int fileno
     SV * buf
@@ -753,6 +819,7 @@ write_all(fileno, buf, offset, timeout)
     RETVAL = (unsigned long)written;
   OUTPUT:
     RETVAL
+
 
 void
 close_client(fileno)
