@@ -489,7 +489,7 @@ int _date_line(char * date_line) {
     return i;
 }
 
-static
+STATIC_INLINE
 int _chunked_header(char *buf, ssize_t len) {
     int dlen = 0, i;
     ssize_t l = len;
@@ -806,7 +806,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     if ( use_chunked > 0 ) {
       iovcnt += (av_len(body)+1)*2;
     }
-    Newx(chunked_header_buf, 32 * (av_len(body)+1), char);
+    Newx(chunked_header_buf, 18 * (av_len(body)+1), char);
 
     {
       struct iovec v[iovcnt]; // Needs C99 compiler
@@ -864,8 +864,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
           v[1].iov_len = sizeof("Date: ") -1 + val_len + 2;
           date_pushed = 1;
           continue;
-        }
-        if ( strncasecmp(key,"Server",len) == 0 ) {
+        } else if ( strncasecmp(key,"Server",len) == 0 ) {
           strcpy(server_line, "Server: ");
           for ( s=val, n = val_len, d=server_line+sizeof("Server: ")-1; n !=0; s++, --n, d++) {
             *d = *s;
@@ -875,9 +874,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
           v[2].iov_base = server_line;
           v[2].iov_len = sizeof("Server: ") -1 + val_len + 2;
           continue;
-        }
-
-        if ( strncasecmp(key,"Content-Length",len) == 0 || strncasecmp(key,"Transfer-Encoding",len) == 0) {
+        } else if ( strncasecmp(key,"Content-Length",len) == 0 || strncasecmp(key,"Transfer-Encoding",len) == 0) {
             use_chunked = 0;
         }
 
@@ -913,10 +910,11 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
 
       ssize_t chb_offset = 0;
       for (i=0; i < av_len(body) + 1; i++ ) {
-        if (!SvOK(*av_fetch(body,i,0))) {
+        SV **b = av_fetch(body,i,0);
+        if (!SvOK(*b)) {
           continue;
         }
-        d = svpv2char(aTHX_ *av_fetch(body,i,0), &len);
+        d = svpv2char(aTHX_ *b, &len);
         if ( len < 1 ) {
           continue;
         }
