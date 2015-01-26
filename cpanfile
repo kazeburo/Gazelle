@@ -13,5 +13,6 @@ on 'test' => sub {
     requires 'HTTP::Request::Common';
     requires 'Plack::Test::Suite';
     requires 'Plack::Test';
+    requires 'HTTP::Tiny', '0.053';
 };
 

@@ -54,6 +54,7 @@
       "test" : {
          "requires" : {
             "HTTP::Request::Common" : "0",
+            "HTTP::Tiny" : "0.053",
             "Plack::Test" : "0",
             "Plack::Test::Suite" : "0",
             "Test::More" : "0.98",
