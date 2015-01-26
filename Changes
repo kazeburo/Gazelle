@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.20 2015-01-26T14:55:56Z
+
+  - optimize around chunked transfer
+
 0.12 2015-01-26T02:31:11Z
 
   - support HTTP/1.1
