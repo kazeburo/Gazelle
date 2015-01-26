@@ -35,12 +35,10 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "ContentAgain0";
-    };
-    $HTTP_VER = "1.0";
-    test_psgi $app, sub {
-        my $cb = shift;
-        my $req = HTTP::Request->new(GET => "http://localhost/");
-        my $res = $cb->($req);
+
+        $HTTP_VER = "1.0";
+        $req = HTTP::Request->new(GET => "http://localhost/");
+        $res = $cb->($req);
         is $res->content, "ContentAgain0";
     };
 
@@ -59,12 +57,10 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "ContentAgain0";
-    };
-    $HTTP_VER = "1.0";
-    test_psgi $app, sub {
-        my $cb = shift;
-        my $req = HTTP::Request->new(GET => "http://localhost/");
-        my $res = $cb->($req);
+
+        $HTTP_VER = "1.0";
+        $req = HTTP::Request->new(GET => "http://localhost/");
+        $res = $cb->($req);
         is $res->content, "ContentAgain0";
     };
 }
@@ -83,12 +79,9 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
-    };
-    $HTTP_VER = "1.0";
-    test_psgi $app, sub {
-        my $cb = shift;
-        my $req = HTTP::Request->new(GET => "http://localhost/");
-        my $res = $cb->($req);
+        $HTTP_VER = "1.0";
+        $req = HTTP::Request->new(GET => "http://localhost/");
+        $res = $cb->($req);
         is $res->content, "";
     };
 
@@ -107,16 +100,12 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
-    };
-    $HTTP_VER = "1.0";
-    test_psgi $app, sub {
-        my $cb = shift;
-        my $req = HTTP::Request->new(GET => "http://localhost/");
-        my $res = $cb->($req);
+        $HTTP_VER = "1.0";
+        $req = HTTP::Request->new(GET => "http://localhost/");
+        $res = $cb->($req);
         is $res->content, "";
     };
 }
-
 
 {
     my $app = sub {
@@ -128,12 +117,9 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "ContentAgain0";
-    };
-    $HTTP_VER = "1.0";
-    test_psgi $app, sub {
-        my $cb = shift;
-        my $req = HTTP::Request->new(GET => "http://localhost/");
-        my $res = $cb->($req);
+        $HTTP_VER = "1.0";
+        $req = HTTP::Request->new(GET => "http://localhost/");
+        $res = $cb->($req);
         is $res->content, "ContentAgain0";
     };
 }
@@ -148,17 +134,12 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
-    };
-    $HTTP_VER = "1.0";
-    test_psgi $app, sub {
-        my $cb = shift;
-        my $req = HTTP::Request->new(GET => "http://localhost/");
-        my $res = $cb->($req);
+        $HTTP_VER = "1.0";
+        $req = HTTP::Request->new(GET => "http://localhost/");
+        $res = $cb->($req);
         is $res->content, "";
     };
 }
-
-
 
 
 done_testing;
