@@ -50,7 +50,8 @@ extern "C" {
 #define MAX_HEADERS         128
 #define READ_BUFSZ 16384
 #define BAD_REQUEST "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request\r\n"
-
+#define EXPECT_CONTINUE "HTTP/1.1 100 Continue\r\n\r\n"
+#define EXPECT_FAILED "HTTP/1.1 417 Expectation Failed\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nExpectation Failed\r\n"
 #define TOU(ch) (('a' <= ch && ch <= 'z') ? ch - ('a' - 'A') : ch)
 
 static const char *DoW[] = {
@@ -59,6 +60,7 @@ static const char *DoW[] = {
 static const char *MoY[] = {
   "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"
 };
+static const char xdigit[16] = {'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};
 
 static HV *env_template;
 
@@ -246,7 +248,7 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   (void)hv_stores(env, "SCRIPT_NAME", newSVpvn("", 0));
   strcpy(tmp, "HTTP/1.");
   tmp[sizeof("HTTP/1.")-1] = '0' + minor_version;
-  (void)hv_stores(env, "SERVER_PROTOCOL", newSVpvn(tmp, sizeof("HTTP/1.0")-1));
+  (void)hv_stores(env, "SERVER_PROTOCOL", newSVpvn(tmp, sizeof("HTTP/1.1")-1));
 
   /* PATH_INFO QUERY_STRING */
   path_len = find_ch(path, path_len, '#'); /* strip off all text after # after storing request_uri */
@@ -487,6 +489,23 @@ int _date_line(char * date_line) {
     return i;
 }
 
+STATIC_INLINE
+int _chunked_header(char *buf, ssize_t len) {
+    int dlen = 0, i;
+    ssize_t l = len;
+    while ( l > 0 ) {
+        dlen++;
+        l /= 16;
+    }
+    i = dlen;
+    buf[i++] = 13;
+    buf[i++] = 10;
+    while ( len > 0 ) {
+        buf[--dlen] = xdigit[len % 16];
+        len /= 16;
+    }
+    return i;
+}
 
 MODULE = Plack::Handler::Gazelle    PACKAGE = Plack::Handler::Gazelle
 
@@ -627,6 +646,22 @@ PPCODE:
       buf_len += rv;
     }
 
+    /* expect */
+    SV **expect_val = hv_fetch(env, "HTTP_EXPECT" , sizeof("HTTP_EXPECT")-1, 0);
+    if (expect_val != NULL) {
+      if ( strncmp(SvPV_nolen(*expect_val), "100-continue", SvCUR(*expect_val)) == 0 ) {
+        rv = _write_timeout(fd, timeout, EXPECT_CONTINUE, sizeof(EXPECT_CONTINUE) - 1);
+        if ( rv <= 0 ) {
+          close(fd);
+          goto badexit;
+        }
+      } else {
+        rv = _write_timeout(fd, timeout, EXPECT_FAILED, sizeof(EXPECT_FAILED) - 1);
+        close(fd);
+        goto badexit;
+      }
+    }
+
     PUSHs(sv_2mortal(newSViv(fd)));
     PUSHs(sv_2mortal(newSVpvn(&read_buf[reqlen], buf_len - reqlen)));
     PUSHs(sv_2mortal(newRV_noinc((SV*)env)));
@@ -726,12 +761,16 @@ close_client(fileno)
     close(fileno);
 
 unsigned long
-write_psgi_response(fileno, timeout, status_code, headers, body)
+write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     int fileno
     double timeout
     int status_code
     AV * headers
     AV * body
+    SV * use_chunkedv
+  ALIAS:
+    Plack::Handler::Gazelle::write_psgi_response = 0
+    Plack::Handler::Gazelle::write_psgi_response_header = 1
   PREINIT:
     ssize_t rv;
     STRLEN len;
@@ -751,11 +790,24 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
     const char * s;
     char* d;
     ssize_t n;
+    IV use_chunked;
+    char * chunked_header_buf;
 
   CODE:
     if( (av_len(headers)+1) % 2 == 1 ) croak("ERROR: Odd number of element in header");
-
+    use_chunked = SvIV(use_chunkedv);
     iovcnt = 10 + (av_len(headers)+1)*2 + (av_len(body) + 1);
+
+    /* status_with_no_entity_body */
+    if ( status_code < 200 || status_code == 204 || status_code == 304 ) {
+      use_chunked = 0;
+    }
+
+    if ( use_chunked > 0 ) {
+      iovcnt += (av_len(body)+1)*2;
+    }
+    Newx(chunked_header_buf, 18 * (av_len(body)+1), char);
+
     {
       struct iovec v[iovcnt]; // Needs C99 compiler
       /* status line */
@@ -768,7 +820,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
       status_line[i++] = '/';
       status_line[i++] = '1';
       status_line[i++] = '.';
-      status_line[i++] = '0';
+      status_line[i++] = '1';
       status_line[i++] = ' ';
       str_i(status_line,&i,status_code,3);
       status_line[i++] = ' ';
@@ -812,8 +864,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
           v[1].iov_len = sizeof("Date: ") -1 + val_len + 2;
           date_pushed = 1;
           continue;
-        }
-        if ( strncasecmp(key,"Server",len) == 0 ) {
+        } else if ( strncasecmp(key,"Server",len) == 0 ) {
           strcpy(server_line, "Server: ");
           for ( s=val, n = val_len, d=server_line+sizeof("Server: ")-1; n !=0; s++, --n, d++) {
             *d = *s;
@@ -823,7 +874,10 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
           v[2].iov_base = server_line;
           v[2].iov_len = sizeof("Server: ") -1 + val_len + 2;
           continue;
+        } else if ( strncasecmp(key,"Content-Length",len) == 0 || strncasecmp(key,"Transfer-Encoding",len) == 0) {
+            use_chunked = 0;
         }
+
         v[iovcnt].iov_base = key;
         v[iovcnt].iov_len = len;
         iovcnt++;
@@ -844,16 +898,45 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
         v[1].iov_base = date_line;
       }
 
+      if ( use_chunked > 0 ) {
+          v[iovcnt].iov_base = "Transfer-Encoding: chunked\r\n";
+          v[iovcnt].iov_len = sizeof("Transfer-Encoding: chunked\r\n") - 1;
+          iovcnt++;
+      }
+
       v[iovcnt].iov_base = "Connection: close\r\n\r\n";
       v[iovcnt].iov_len = sizeof("Connection: close\r\n\r\n") - 1;
       iovcnt++;
 
+      ssize_t chb_offset = 0;
       for (i=0; i < av_len(body) + 1; i++ ) {
-        if (!SvOK(*av_fetch(body,i,0))) {
+        SV **b = av_fetch(body,i,0);
+        if (!SvOK(*b)) {
           continue;
         }
-        v[iovcnt].iov_base = svpv2char(aTHX_ *av_fetch(body,i,0), &len);
+        d = svpv2char(aTHX_ *b, &len);
+        if ( len < 1 ) {
+          continue;
+        }
+        if ( use_chunked ) {
+          v[iovcnt].iov_len = _chunked_header(&chunked_header_buf[chb_offset],len);
+          v[iovcnt].iov_base = &chunked_header_buf[chb_offset];
+          chb_offset += v[iovcnt].iov_len;
+          iovcnt++;
+        }
+        v[iovcnt].iov_base = d;
         v[iovcnt].iov_len = len;
+        iovcnt++;
+        if ( use_chunked ) {
+          v[iovcnt].iov_base = "\r\n";
+          v[iovcnt].iov_len = sizeof("\r\n") -1;
+          iovcnt++;
+        }
+      }
+
+      if ( use_chunked && ix == 0 ) {
+        v[iovcnt].iov_base = "0\r\n\r\n";
+        v[iovcnt].iov_len = sizeof("0\r\n\r\n") - 1;
         iovcnt++;
       }
 
@@ -880,6 +963,8 @@ write_psgi_response(fileno, timeout, status_code, headers, body)
         }
       }
     }
+    sv_setiv(use_chunkedv, use_chunked);
+    Safefree(chunked_header_buf);
     if (rv < 0) XSRETURN_UNDEF;
     RETVAL = (unsigned long) written;
   OUTPUT:

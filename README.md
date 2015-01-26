@@ -14,7 +14,7 @@ Many code was rewritten and optimized by XS.
 
 Gazelle supports following features.
 
-\- only supports HTTP/1.0. But does not support Keepalive.
+\- supports HTTP/1.1. But does not have Keepalive.
 
 \- ultra fast HTTP processing using picohttpparser
 

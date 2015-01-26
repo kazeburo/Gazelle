@@ -67,7 +67,7 @@ test_tcp(
         }, 'result of GET /');
 
         $req = <<"EOT";
-POST /hoge HTTP/1.1\r
+POST /hoge HTTP/1.0\r
 Content-Type: text/plain\r
 Content-Length: 15\r
 Host: example.com\r
@@ -85,7 +85,7 @@ EOT
             REQUEST_URI     => '/hoge',
             QUERY_STRING    => '',
             SCRIPT_NAME     => '',
-            SERVER_PROTOCOL => 'HTTP/1.1',
+            SERVER_PROTOCOL => 'HTTP/1.0',
         }, 'result of POST with headers');
 
         $req = <<"EOT";
@@ -176,7 +176,7 @@ EOT
         }, 'URI fragment after query string');
 
         my $name = 'x' x $MAX_HEADER_LEN; # OK
-        $req = "GET / HTTP/1.1" . $crlf
+        $req = "GET / HTTP/1.0" . $crlf
             . "$name: 42" . $crlf
             . $crlf;
         my $env = $requester->($req);
@@ -184,14 +184,14 @@ EOT
         is $env->{'HTTP_' . uc $name}, 42, 'very long name';
 
         $name = 'x' x ($MAX_HEADER_LEN + 1);
-        $req = "GET / HTTP/1.1" . $crlf
+        $req = "GET / HTTP/1.0" . $crlf
           . "$name: 42" . $crlf
           . $crlf;
         $env = $requester->($req);
         is $env->{REQUEST_METHOD}, undef;
         is $env->{'HTTP_' . uc $name}, undef, 'too long name';
 
-        $req = "GET / HTTP/1.1" . $crlf
+        $req = "GET / HTTP/1.0" . $crlf
           . join($crlf, map { "X$_: $_" } 0 .. $MAX_HEADERS) . $crlf
           . $crlf;
         is_deeply($requester->($req),{}, 'too many headers')
