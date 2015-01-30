@@ -56,11 +56,13 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $cb = shift;
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
+        is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
 
         $HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
+        is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
     };
 }
@@ -116,10 +118,12 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         my $cb = shift;
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
+        is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
         $HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
+        is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
     };
 }

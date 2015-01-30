@@ -34,7 +34,7 @@ test_psgi $app, sub {
     $req->content(sub { scalar <$fh> });
 
     my $res = $cb->($req);
-
+    is $res->code, 200;
     is $res->header('X-Content-Length'), 79838;
     is Digest::MD5::md5_hex($res->content), '983726ae0e4ce5081bef5fb2b7216950';
 };

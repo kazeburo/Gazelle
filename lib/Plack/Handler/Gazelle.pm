@@ -146,7 +146,7 @@ sub run {
                     if (my $cl = $env->{CONTENT_LENGTH}) {
                         my $buffer = Stream::Buffered->new($cl);
                         while ($cl > 0) {
-                            my $chunk;
+                            my $chunk = "";
                             if (length $buf) {
                                 $chunk = $buf;
                                 $buf = '';

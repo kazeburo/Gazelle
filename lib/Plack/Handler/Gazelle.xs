@@ -873,7 +873,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     if ( use_chunked > 0 ) {
       iovcnt += (av_len(body)+1)*2;
     }
-    Newx(chunked_header_buf, 18 * (av_len(body)+1), char);
+    Newx(chunked_header_buf, 18 * (av_len(body)+2), char);
 
     {
       struct iovec v[iovcnt]; // Needs C99 compiler
