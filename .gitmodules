@@ -1,3 +1,3 @@
 [submodule "picohttpparser"]
-	path = picohttpparser
+	path = lib/Plack/Handler/picohttpparser
 	url = https://github.com/h2o/picohttpparser.git

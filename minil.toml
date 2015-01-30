@@ -2,7 +2,8 @@ name = "Gazelle"
 # badges = ["travis"]
 authority="cpan:KAZEBURO"
 
-module_maker="ModuleBuildTiny"
+[build]
+build_class = "builder::MyBuilder"
 
 [FileGatherer]
-exclude_match = ['^picohttpparser/picotest']
+exclude_match = ['^lib/Plack/Handler/picohttpparser/picotest']
