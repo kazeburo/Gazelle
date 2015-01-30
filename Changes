@@ -2,6 +2,12 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.22 2015-01-30T14:27:20Z
+
+  - does not support freebsd and solaris.
+    They have poor writev support?
+    see https://groups.google.com/forum/#!topic/mailing.unix.samba-technical/2xER4neCrT4
+
 0.21 2015-01-30T01:46:38Z
 
   - trial release for cpantesters
