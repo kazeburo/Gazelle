@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.21 2015-01-30T01:46:38Z
+
+  - trial release for cpantesters
+
 0.20 2015-01-26T14:55:56Z
 
   - optimize around chunked transfer
