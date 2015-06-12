@@ -108,7 +108,6 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         is $res->content, "";
     };
 }
-warn "eeee";
 
 {
     my $app = sub {
@@ -122,14 +121,12 @@ warn "eeee";
         is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
         $HTTP_VER = "1.0";
-        warn "ddddd";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
     };
 }
-warn "fff";
 {
     my $app = sub {
         my $env = shift;
