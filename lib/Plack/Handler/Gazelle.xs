@@ -808,6 +808,10 @@ write_all(fileno, buf, offset, timeout)
     SvUPGRADE(buf, SVt_PV);
     d = SvPV_nolen(buf);
     buf_len = SvCUR(buf);
+    if ( buf_len == 0 ) {
+      RETVAL = 0;
+      return;
+    }
     written = 0;
     while ( buf_len > written ) {
       rv = _write_timeout(fileno, timeout, &d[written], buf_len - written);

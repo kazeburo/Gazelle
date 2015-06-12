@@ -43,7 +43,6 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
 
 }
-sleep 1;
 
 {
     my $app = sub {
@@ -67,7 +66,6 @@ sleep 1;
         is $res->content, "ContentAgain0";
     };
 }
-sleep 1;
 
 {
     my $app = sub {
@@ -90,7 +88,6 @@ sleep 1;
     };
 
 }
-sleep 1;
 
 {
     my $app = sub {
@@ -111,7 +108,7 @@ sleep 1;
         is $res->content, "";
     };
 }
-sleep 1;
+warn "eeee";
 
 {
     my $app = sub {
@@ -125,14 +122,14 @@ sleep 1;
         is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
         $HTTP_VER = "1.0";
+        warn "ddddd";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
     };
 }
-sleep 1;
-
+warn "fff";
 {
     my $app = sub {
         my $env = shift;
