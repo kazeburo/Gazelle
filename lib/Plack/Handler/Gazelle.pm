@@ -123,6 +123,7 @@ sub run {
 
             my $proc_req_count = 0;
             $self->{can_exit} = 1;
+            $self->{term_received} = 0;
             local $SIG{TERM} = sub {
                 exit 0 if $self->{can_exit};
                 $self->{term_received}++;
@@ -210,9 +211,7 @@ sub run {
                         exit 0;
                     }
                 }
-                if ( $self->{term_received} ) {
-                    exit 0;
-                }
+                exit 0 if $self->{term_received};
             }
         });
     }

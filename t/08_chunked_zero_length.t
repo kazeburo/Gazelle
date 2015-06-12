@@ -1,6 +1,6 @@
 use strict;
 use Test::TCP;
-use Plack::Test;
+use Plack::Test qw//;
 use HTTP::Request;
 use Test::More;
 
@@ -15,6 +15,10 @@ sub HTTP::Tiny::write_request_header {
 $Plack::Test::Impl = "Server";
 $ENV{PLACK_SERVER} = 'Gazelle';
 
+sub test_psgi {
+  Plack::Test::test_psgi(@_);
+  select undef, undef, undef, 0.5;
+}
 
 {
     my $app = sub {
@@ -43,6 +47,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
 
 }
+
 
 {
     my $app = sub {
