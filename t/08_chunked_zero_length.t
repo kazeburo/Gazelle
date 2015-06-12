@@ -43,6 +43,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
 
 }
+sleep 1;
 
 {
     my $app = sub {
@@ -66,6 +67,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         is $res->content, "ContentAgain0";
     };
 }
+sleep 1;
 
 {
     my $app = sub {
@@ -88,6 +90,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
 
 }
+sleep 1;
 
 {
     my $app = sub {
@@ -108,6 +111,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         is $res->content, "";
     };
 }
+sleep 1;
 
 {
     my $app = sub {
@@ -127,6 +131,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
         is $res->content, "ContentAgain0";
     };
 }
+sleep 1;
 
 {
     my $app = sub {

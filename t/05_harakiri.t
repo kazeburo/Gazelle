@@ -22,6 +22,7 @@ test_psgi
         }
         cmp_ok(keys(%seen_pid), '<=', 10, 'In non-harakiri mode, pid is reused')
     };
+sleep 1;
 
 test_psgi
     app => sub {
