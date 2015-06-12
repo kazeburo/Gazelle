@@ -206,9 +206,12 @@ sub run {
                     } else {
                         die "Bad response $res";
                     }
-                    if ($self->{term_received} || $env->{'psgix.harakiri.commit'}) {
+                    if ($env->{'psgix.harakiri.commit'}) {
                         exit 0;
                     }
+                }
+                if ( $self->{term_received} ) {
+                    exit 0;
                 }
             }
         });
