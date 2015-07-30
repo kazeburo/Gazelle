@@ -91,7 +91,7 @@ if set, randomizes the number of requests handled by a single worker process bet
 
 =head2 --spawn-interval=#
 
-if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html for more information. (default: none)
+if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See L<http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html> for more information. (default: none)
 
 =head1 SEE ALSO
 
