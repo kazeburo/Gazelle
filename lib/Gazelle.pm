@@ -46,7 +46,7 @@ Gazelle supports following features.
 
 Gazelle is suitable for running HTTP application servers behind a reverse proxy like nginx.
 
-Benchmark is here. https://github.com/kazeburo/Gazelle/wiki/Benchmark
+Benchmark is here. L<https://github.com/kazeburo/Gazelle/wiki/Benchmark>
 
 =head1 SAMPLE CONFIGURATION WITH NGINX
 
