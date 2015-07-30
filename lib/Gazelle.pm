@@ -87,7 +87,7 @@ max. number of requests to be handled before a worker process exits (default: 10
 
 =head2 --min-reqs-per-child=#
 
-if set, randomizes the number of requests handled by a single worker process between the value and that supplied by C<--max-reqs-per-chlid> (default: none)
+if set, randomizes the number of requests handled by a single worker process between the value and that supplied by C<--max-reqs-per-child> (default: none)
 
 =head2 --spawn-interval=#
 
