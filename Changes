@@ -2,6 +2,8 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+ - POD tweaks (Thanks Arthur Axel fREW Schmidt)
+
 0.25 2015-06-12T07:18:44Z
 
   - fixed test. prevent stopping test around signal
