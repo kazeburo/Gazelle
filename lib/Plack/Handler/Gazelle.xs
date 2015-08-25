@@ -739,6 +739,7 @@ write_chunk(fileno, buf, offset, timeout)
     ssize_t written = 0;
     ssize_t vec_offset = 0;
     int count =0;
+    int remain;
     ssize_t iovcnt = 3;
     char chunked_header_buf[18];
   CODE:
@@ -765,15 +766,17 @@ write_chunk(fileno, buf, offset, timeout)
 
       vec_offset = 0;
       written = 0;
-      while ( iovcnt - vec_offset > 0 ) {
-        count = (iovcnt > IOV_MAX) ? IOV_MAX : iovcnt;
-        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count - vec_offset, (vec_offset == 0) ? 0 : 1);
+      remain = iovcnt;
+      while ( remain > 0 ) {
+        count = (remain > IOV_MAX) ? IOV_MAX : remain;
+        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count, (vec_offset == 0) ? 0 : 1);
         if ( rv <= 0 ) {
           warn("failed to writev");
           // error or disconnected
           break;
         }
         written += rv;
+        remain -= count;
         while ( rv > 0 ) {
           if ( (unsigned int)rv >= v[vec_offset].iov_len ) {
             rv -= v[vec_offset].iov_len;
@@ -850,6 +853,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     ssize_t vec_offset;
     ssize_t written;
     int count;
+    int remain;
     int i;
     struct iovec * v;
     char status_line[512];
@@ -1014,15 +1018,17 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
 
       vec_offset = 0;
       written = 0;
-      while ( iovcnt - vec_offset > 0 ) {
-        count = (iovcnt > IOV_MAX) ? IOV_MAX : iovcnt;
-        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count - vec_offset, (vec_offset == 0) ? 0 : 1);
+      remain = iovcnt;
+      while ( remain > 0 ) {
+        count = (remain > IOV_MAX) ? IOV_MAX : remain;
+        rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count, (vec_offset == 0) ? 0 : 1);
         if ( rv <= 0 ) {
           warn("failed to writev");
           // error or disconnected
           break;
         }
         written += rv;
+        remain -= count;
         while ( rv > 0 ) {
           if ( rv >= v[vec_offset].iov_len ) {
             rv -= v[vec_offset].iov_len;
