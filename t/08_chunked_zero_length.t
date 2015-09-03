@@ -17,7 +17,7 @@ $ENV{PLACK_SERVER} = 'Gazelle';
 
 sub test_psgi {
   Plack::Test::test_psgi(@_);
-  select undef, undef, undef, 0.5;
+  select undef, undef, undef, 1;
 }
 
 {
