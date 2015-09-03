@@ -74,11 +74,12 @@
          "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
-   "version" : "0.25",
+   "version" : "0.30",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "mattn <mattn.jp@gmail.com>",
       "bayashi <bayashi@cpan.org>",
+      "Arthur Axel 'fREW' Schmidt <frioux@gmail.com>",
       "Syohei YOSHIDA <syohex@gmail.com>"
    ]
 }
