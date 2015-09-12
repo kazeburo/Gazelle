@@ -776,11 +776,11 @@ write_chunk(fileno, buf, offset, timeout)
           break;
         }
         written += rv;
-        remain -= count;
         while ( rv > 0 ) {
           if ( (unsigned int)rv >= v[vec_offset].iov_len ) {
             rv -= v[vec_offset].iov_len;
             vec_offset++;
+			remain--;
           }
           else {
             v[vec_offset].iov_base = (char*)v[vec_offset].iov_base + rv;
@@ -1028,11 +1028,11 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
           break;
         }
         written += rv;
-        remain -= count;
         while ( rv > 0 ) {
           if ( rv >= v[vec_offset].iov_len ) {
             rv -= v[vec_offset].iov_len;
             vec_offset++;
+			remain--;
           }
           else {
             v[vec_offset].iov_base = (char*)v[vec_offset].iov_base + rv;
