@@ -2,6 +2,11 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.31 2015-10-06T16:20:23Z
+
+ - fix iovcnt calculation (Thanks badalex)
+ - support a server_ready callback
+
 0.30 2015-09-03T05:10:33Z
 
  - POD tweaks (Thanks Arthur Axel fREW Schmidt)
