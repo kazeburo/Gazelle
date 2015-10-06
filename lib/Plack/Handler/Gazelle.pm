@@ -51,6 +51,8 @@ sub new {
     }
 
     my $self = bless {
+        server_software      => $args{server_software} || $class,
+        server_ready         => $args{server_ready} || sub {},
         listen_sock          => $listen_sock,
         host                 => $args{host} || 0,
         port                 => $args{port} || 8080,
@@ -90,6 +92,7 @@ sub setup_listener {
     if ($^O eq 'linux' && $self->{_listen_sock_is_tcp}) {
         setsockopt($self->{listen_sock}, IPPROTO_TCP, 9, 1);
     }
+    $self->{server_ready}->($self);
 }
 
 
