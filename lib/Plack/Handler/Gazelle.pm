@@ -125,24 +125,19 @@ sub run {
             );
 
             my $proc_req_count = 0;
-            $self->{can_exit} = 1;
             $self->{term_received} = 0;
             local $SIG{TERM} = sub {
-                exit 0 if $self->{can_exit};
                 $self->{term_received}++;
-                exit 0
-                    if ( $self->{can_exit} || $self->{term_received} > 1 );
+                exit 0 if $self->{term_received} > 1;
             };
             local $SIG{PIPE} = 'IGNORE';
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
-                $self->{can_exit} = 1;
                 if ( my ($conn, $buf, $env) = accept_psgi(
                     fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp},
                     $self->{host} || 0, $self->{port} || 0
                 ) ) {
                     my $guard = guard { close_client($conn) };
-                    $self->{can_exit} = 0;
                     ++$proc_req_count;
 
                     my $res = $bad_response;
@@ -213,6 +208,8 @@ sub run {
                     if ($env->{'psgix.harakiri.commit'}) {
                         exit 0;
                     }
+                } elsif($! == EINTR) {
+                    exit 0 if $self->{term_received};
                 }
                 exit 0 if $self->{term_received};
             }
