@@ -28,6 +28,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
+            "Devel::CheckCompiler" : "0.04",
             "Module::Build" : "0.38"
          }
       },
@@ -81,6 +82,7 @@
       "bayashi <bayashi@cpan.org>",
       "Arthur Axel 'fREW' Schmidt <frioux@gmail.com>",
       "Syohei YOSHIDA <syohex@gmail.com>",
-      "Alex Hunsaker <badalex@gmail.com>"
+      "Alex Hunsaker <badalex@gmail.com>",
+      "Ichinose Shogo <shogo82148@gmail.com>"
    ]
 }
