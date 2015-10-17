@@ -2,6 +2,11 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.32 2015-10-17T14:54:09Z
+
+ - fix failing graceful shutdown while accepting ( Thanks shogo82148)
+ - fix accept4 detection
+
 0.31 2015-10-06T16:20:23Z
 
  - fix iovcnt calculation (Thanks badalex)
