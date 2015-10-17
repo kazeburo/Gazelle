@@ -324,7 +324,7 @@ STATIC_INLINE
 int
 _accept(int fileno, struct sockaddr *addr, unsigned int addrlen) {
     int fd;
-#ifdef SOCK_NONBLOCK
+#ifdef HAVE_ACCEPT4
     fd = accept4(fileno, addr, &addrlen, SOCK_CLOEXEC|SOCK_NONBLOCK);
 #else
     fd = accept(fileno, addr, &addrlen);
@@ -332,7 +332,7 @@ _accept(int fileno, struct sockaddr *addr, unsigned int addrlen) {
     if (fd < 0) {
       return fd;
     }
-#ifndef SOCK_NONBLOCK
+#ifndef HAVE_ACCEPT4
     fcntl(fd, F_SETFD, FD_CLOEXEC);
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 #endif
