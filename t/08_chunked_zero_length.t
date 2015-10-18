@@ -16,8 +16,13 @@ $Plack::Test::Impl = "Server";
 $ENV{PLACK_SERVER} = 'Gazelle';
 
 sub test_psgi {
-  Plack::Test::test_psgi(@_);
-  select undef, undef, undef, 1;
+    my $pid = fork;
+    die $! unless defined $pid;
+    if ( $pid == 0 ) {
+        Plack::Test::test_psgi(@_);
+        exit;
+    }
+    wait;
 }
 
 {
