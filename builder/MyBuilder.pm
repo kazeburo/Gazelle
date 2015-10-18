@@ -21,7 +21,7 @@ sub new {
 
 int main(void)
 {
-    return accept4(0, (void*)0, (void*)0, 0);
+    return accept4(0, (void*)0, (void*)0, SOCK_CLOEXEC|SOCK_NONBLOCK);
 }
 ...
         $args{extra_compiler_flags} ||= [];
