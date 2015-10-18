@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.33 2015-10-18T12:44:13Z
+
+ - fix accept4 and flags detection
+
 0.32 2015-10-17T14:54:09Z
 
  - fix failing graceful shutdown while accepting ( Thanks shogo82148)
