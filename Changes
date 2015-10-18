@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.34 2015-10-18T13:16:21Z
+
+ - fix chunked_zero test. tests on child process
+
 0.33 2015-10-18T12:44:13Z
 
  - fix accept4 and flags detection
