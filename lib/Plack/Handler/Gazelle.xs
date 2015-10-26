@@ -14,7 +14,11 @@ extern "C" {
 #endif
 
 #define NEED_newSVpvn_flags
+
 #include "ppport.h"
+#ifndef __need_IOV_MAX
+#define __need_IOV_MAX
+#endif
 
 #include <sys/uio.h>
 #include <errno.h>
@@ -36,9 +40,9 @@ extern "C" {
 #endif /* STATIC_INLINE */
 
 #ifndef IOV_MAX
-#  ifdef UIO_MAXIOV
-#    define IOV_MAX UIO_MAXIOV
-#  endif
+#if defined(__FreeBSD__) || defined(__APPLE__)
+# define IOV_MAX 128
+#endif
 #endif
 
 #ifndef IOV_MAX

@@ -8,8 +8,8 @@ use Devel::CheckCompiler 0.04;
 sub new {
     my $self = shift;
     my %args = @_;
-    if ($^O eq 'freebsd' || $^O eq 'solaris') {
-        print "This module does not support FreeBSD and Solaris.\n";
+    if ( $^O eq 'solaris') {
+        print "This module does not support Solaris.\n";
         exit 0;
     }
     
