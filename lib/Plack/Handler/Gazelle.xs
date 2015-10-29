@@ -52,7 +52,7 @@ extern "C" {
 #define MAX_HEADER_SIZE 16384
 #define MAX_HEADER_NAME_LEN 1024
 #define MAX_HEADERS         128
-#define READ_BUFSZ 16384
+#define READ_BUFSZ 16383
 #define BAD_REQUEST "HTTP/1.0 400 Bad Request\r\nConnection: close\r\n\r\n400 Bad Request\r\n"
 #define EXPECT_CONTINUE "HTTP/1.1 100 Continue\r\n\r\n"
 #define EXPECT_FAILED "HTTP/1.1 417 Expectation Failed\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nExpectation Failed\r\n"
