@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.36 2015-10-30T02:03:58Z
+
+ - change read buffer size for OpenBSD
+
 0.35 2015-10-26T07:07:55Z
 
  - define __need_IOV_MAX for FreeBSD
