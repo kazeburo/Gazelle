@@ -1,6 +1,6 @@
 use strict;
 use Test::TCP;
-use Plack::Test qw//;
+use Plack::Test;
 use HTTP::Request;
 use Test::More;
 
@@ -15,15 +15,6 @@ sub HTTP::Tiny::write_request_header {
 $Plack::Test::Impl = "Server";
 $ENV{PLACK_SERVER} = 'Gazelle';
 
-sub test_psgi {
-    my $pid = fork;
-    die $! unless defined $pid;
-    if ( $pid == 0 ) {
-        Plack::Test::test_psgi(@_);
-        exit;
-    }
-    wait;
-}
 
 {
     my $app = sub {
@@ -41,6 +32,7 @@ sub test_psgi {
     };
     test_psgi $app, sub {
         my $cb = shift;
+        $HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "ContentAgain0";
@@ -64,6 +56,7 @@ sub test_psgi {
     };
     test_psgi $app, sub {
         my $cb = shift;
+        $HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->status_line, "200 OK";
@@ -88,6 +81,7 @@ sub test_psgi {
     };
     test_psgi $app, sub {
         my $cb = shift;
+        $HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
@@ -109,6 +103,7 @@ sub test_psgi {
     };
     test_psgi $app, sub {
         my $cb = shift;
+        $HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
@@ -126,6 +121,7 @@ sub test_psgi {
     };
     test_psgi $app, sub {
         my $cb = shift;
+        $HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->status_line, "200 OK";
@@ -144,6 +140,7 @@ sub test_psgi {
     };
     test_psgi $app, sub {
         my $cb = shift;
+        $HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";

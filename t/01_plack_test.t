@@ -13,7 +13,7 @@ sub HTTP::Tiny::write_request_header {
 {
     Plack::Test::Suite->run_server_tests('Gazelle');
 }
-sleep 1;
+
 {
     $HTTP_VER = "1.0";
     Plack::Test::Suite->run_server_tests('Gazelle');

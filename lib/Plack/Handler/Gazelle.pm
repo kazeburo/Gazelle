@@ -128,11 +128,11 @@ sub run {
             $self->{term_received} = 0;
             local $SIG{TERM} = sub {
                 $self->{term_received}++;
-                exit 0 if $self->{term_received} > 1;
             };
             local $SIG{PIPE} = 'IGNORE';
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
+                exit 0 if $self->{term_received};
                 if ( my ($conn, $buf, $env) = accept_psgi(
                     fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp},
                     $self->{host} || 0, $self->{port} || 0
@@ -208,14 +208,13 @@ sub run {
                     if ($env->{'psgix.harakiri.commit'}) {
                         exit 0;
                     }
-                } elsif($! == EINTR) {
-                    exit 0 if $self->{term_received};
                 }
-                exit 0 if $self->{term_received};
             }
         });
     }
-    $pm->wait_all_children;
+    while ($pm->wait_all_children(1)) {
+        $pm->signal_all_children('TERM');
+    }
 }
 
 sub _calc_minmax_per_child {
