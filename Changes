@@ -2,6 +2,11 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.37 2015-11-06T00:55:50Z
+
+ - race free graceful shutdown. inspired by Starlet
+ - add bigpost test. a few tests were failed on cpantesters
+
 0.36 2015-10-30T02:03:58Z
 
  - change read buffer size for OpenBSD
