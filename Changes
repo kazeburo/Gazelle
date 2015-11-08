@@ -2,6 +2,12 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.38 2015-11-08T06:19:33Z
+
+ - update deps
+ - fix test. HTTP::Tiny::Handle::write_request_header
+ - null terminate chunked header
+
 0.37 2015-11-06T00:55:50Z
 
  - race free graceful shutdown. inspired by Starlet

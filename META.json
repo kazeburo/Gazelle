@@ -44,8 +44,8 @@
       "runtime" : {
          "requires" : {
             "Guard" : "0",
-            "Parallel::Prefork" : "0",
-            "Plack" : "0",
+            "Parallel::Prefork" : "0.17",
+            "Plack" : "1.0037",
             "Server::Starter" : "0",
             "Stream::Buffered" : "0",
             "Try::Tiny" : "0",
@@ -75,7 +75,7 @@
          "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
-   "version" : "0.37",
+   "version" : "0.38",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "mattn <mattn.jp@gmail.com>",
