@@ -3,6 +3,7 @@ use Test::TCP;
 use Plack::Test;
 use HTTP::Request;
 use Test::More;
+use HTTP::Tiny;
 
 my $HTTP_VER = "1.1";
 {

@@ -5,6 +5,7 @@ use Test::More;
 use Plack::Test;
 use HTTP::Request::Common;
 use Digest::MD5;
+use HTTP::Tiny;
 
 my $HTTP_VER = "1.1";
 {
