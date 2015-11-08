@@ -49,6 +49,7 @@ extern "C" {
 #  error "Unable to determine IOV_MAX from system headers"
 #endif
 
+
 #define MAX_HEADER_SIZE 16384
 #define MAX_HEADER_NAME_LEN 1024
 #define MAX_HEADERS         128
@@ -508,6 +509,7 @@ int _chunked_header(char *buf, ssize_t len) {
     i = dlen;
     buf[i++] = 13;
     buf[i++] = 10;
+    buf[i+1] = 0;
     while ( len > 0 ) {
         buf[--dlen] = xdigit[len % 16];
         len /= 16;
@@ -788,7 +790,7 @@ write_chunk(fileno, buf, offset, timeout)
           if ( (unsigned int)rv >= v[vec_offset].iov_len ) {
             rv -= v[vec_offset].iov_len;
             vec_offset++;
-			remain--;
+            remain--;
           }
           else {
             v[vec_offset].iov_base = (char*)v[vec_offset].iov_base + rv;
@@ -816,6 +818,10 @@ write_all(fileno, buf, offset, timeout)
     ssize_t rv;
     ssize_t written = 0;
   CODE:
+    if ( !SvOK(buf) ) {
+      RETVAL = 0;
+      return;
+    }
     SvUPGRADE(buf, SVt_PV);
     d = SvPV_nolen(buf);
     buf_len = SvCUR(buf);
@@ -1037,10 +1043,10 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
         }
         written += rv;
         while ( rv > 0 ) {
-          if ( rv >= v[vec_offset].iov_len ) {
+          if ( (unsigned int)rv >= v[vec_offset].iov_len ) {
             rv -= v[vec_offset].iov_len;
             vec_offset++;
-			remain--;
+            remain--;
           }
           else {
             v[vec_offset].iov_base = (char*)v[vec_offset].iov_base + rv;
