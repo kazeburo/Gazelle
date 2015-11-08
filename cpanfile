@@ -1,8 +1,8 @@
 requires 'perl', '5.008001';
 
-requires 'Plack';
+requires 'Plack','1.0037';
 requires 'Stream::Buffered';
-requires 'Parallel::Prefork';
+requires 'Parallel::Prefork', '0.17';
 requires 'Server::Starter';
 requires 'Try::Tiny';
 requires 'Guard';
