@@ -2,6 +2,11 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.40 2015-11-09T17:18:25Z
+
+ - fix null character in read body. shortage buffer
+ - refactor tests
+
 0.39 2015-11-09T14:57:25Z
 
  - more trial
