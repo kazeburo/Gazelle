@@ -2,6 +2,12 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.39 2015-11-09T14:57:25Z
+
+ - more trial
+ - test requested body
+ - fix types
+
 0.38 2015-11-08T06:19:33Z
 
  - update deps
