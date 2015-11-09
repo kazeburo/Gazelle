@@ -1,11 +1,9 @@
 use strict;
-use Test::TCP;
-use Plack::Test;
 use File::ShareDir;
 use HTTP::Request;
 use Test::More;
 use Digest::MD5;
-
+use t::TestUtils;
 
 $Plack::Test::Impl = "Server";
 $ENV{PLACK_SERVER} = 'Gazelle';

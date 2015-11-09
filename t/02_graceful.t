@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use HTTP::Request::Common;
-use Plack::Test;
+use t::TestUtils;
 use Test::More;
 
 $Plack::Test::Impl = 'Server';

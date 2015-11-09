@@ -1,9 +1,8 @@
 use strict;
 use warnings;
-
 use HTTP::Request::Common;
-use Plack::Test;
 use Test::More;
+use t::TestUtils;
 
 $Plack::Test::Impl = 'Server';
 $ENV{PLACK_SERVER} = 'Gazelle';

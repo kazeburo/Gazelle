@@ -707,7 +707,7 @@ read_timeout(fileno, rbuf, len, offset, timeout)
     if ( len > READ_BUFSZ ) {
       len = READ_BUFSZ;
     }
-    d = SvGROW(buf, buf_len + len);
+    d = SvGROW(buf, buf_len + len + 1);
     rv = _read_timeout(fileno, timeout, &d[offset], len);
     SvCUR_set(buf, (rv > 0) ? rv + buf_len : buf_len);
     *SvEND(buf) = '\0';

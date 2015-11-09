@@ -1,19 +1,8 @@
 use strict;
-use Test::TCP;
-use Plack::Test;
 use HTTP::Request;
 use Test::More;
-use HTTP::Tiny;
+use t::TestUtils;
 
-my $HTTP_VER = "1.1";
-{
-    no warnings 'redefine';
-    sub HTTP::Tiny::Handle::write_request_header {
-        @_ == 4 || die(q/Usage: $handle->write_request_header(method, request_uri, headers)/ . "\n");
-        my ($self, $method, $request_uri, $headers) = @_;
-        return $self->write_header_lines($headers, "$method $request_uri HTTP/$HTTP_VER\x0D\x0A");
-    }
-}
 
 $Plack::Test::Impl = "Server";
 $ENV{PLACK_SERVER} = 'Gazelle';
@@ -35,12 +24,12 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
     test_psgi $app, sub {
         my $cb = shift;
-        $HTTP_VER = "1.1";
+        local $t::TestUtils::HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "ContentAgain0";
 
-        $HTTP_VER = "1.0";
+        local $t::TestUtils::HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->content, "ContentAgain0";
@@ -59,13 +48,13 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
     test_psgi $app, sub {
         my $cb = shift;
-        $HTTP_VER = "1.1";
+        local $t::TestUtils::HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
 
-        $HTTP_VER = "1.0";
+        local $t::TestUtils::HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->status_line, "200 OK";
@@ -84,11 +73,12 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
     test_psgi $app, sub {
         my $cb = shift;
-        $HTTP_VER = "1.1";
+        local $t::TestUtils::HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
-        $HTTP_VER = "1.0";
+
+        local $t::TestUtils::HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->content, "";
@@ -106,11 +96,11 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
     test_psgi $app, sub {
         my $cb = shift;
-        $HTTP_VER = "1.1";
+        local $t::TestUtils::HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
-        $HTTP_VER = "1.0";
+        local $t::TestUtils::HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->content, "";
@@ -124,12 +114,12 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
     test_psgi $app, sub {
         my $cb = shift;
-        $HTTP_VER = "1.1";
+        local $t::TestUtils::HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->status_line, "200 OK";
         is $res->content, "ContentAgain0";
-        $HTTP_VER = "1.0";
+        local $t::TestUtils::HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->status_line, "200 OK";
@@ -143,11 +133,11 @@ $ENV{PLACK_SERVER} = 'Gazelle';
     };
     test_psgi $app, sub {
         my $cb = shift;
-        $HTTP_VER = "1.1";
+        local $t::TestUtils::HTTP_VER = "1.1";
         my $req = HTTP::Request->new(GET => "http://localhost/");
         my $res = $cb->($req);
         is $res->content, "";
-        $HTTP_VER = "1.0";
+        local $t::TestUtils::HTTP_VER = "1.0";
         $req = HTTP::Request->new(GET => "http://localhost/");
         $res = $cb->($req);
         is $res->content, "";

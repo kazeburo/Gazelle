@@ -1,21 +1,10 @@
 use strict;
 use warnings;
-
 use Test::More;
-use Plack::Test;
 use HTTP::Request::Common;
 use Digest::MD5;
-use HTTP::Tiny;
+use t::TestUtils;
 
-my $HTTP_VER = "1.1";
-{
-    no warnings 'redefine';
-    sub HTTP::Tiny::Handle::write_request_header {
-        @_ == 4 || die(q/Usage: $handle->write_request_header(method, request_uri, headers)/ . "\n");
-        my ($self, $method, $request_uri, $headers) = @_;
-        return $self->write_header_lines($headers, "$method $request_uri HTTP/$HTTP_VER\x0D\x0A");
-    }
-}
 
 $Plack::Test::Impl = 'Server';
 $ENV{PLACK_SERVER} = 'Gazelle';
@@ -35,10 +24,11 @@ sub test_bigpost {
             is $res->message, 'OK';
             is $res->header('Client-Content-Length'), length $chunk;
             is length $res->content, length $chunk;
-            is $res->header('Client-Header-Content-MD5'), Digest::MD5::md5_hex(substr($chunk,0,100)), "header md $HTTP_VER";
-            is Digest::MD5::md5_hex($res->content), Digest::MD5::md5_hex($chunk), "md5 $HTTP_VER";
-            is substr($res->content,0,100), substr($chunk,0,100), "body header $HTTP_VER";
-            is substr($res->content,-100,100), substr($chunk,-100,100), "body footer $HTTP_VER";
+            is $res->header('Client-Header-Content-MD5'), Digest::MD5::md5_hex(substr($chunk,0,100)),
+                "header md $t::TestUtils::HTTP_VER";
+            is Digest::MD5::md5_hex($res->content), Digest::MD5::md5_hex($chunk), "md5 $t::TestUtils::HTTP_VER";
+            is substr($res->content,0,100), substr($chunk,0,100), "body header $t::TestUtils::HTTP_VER";
+            is substr($res->content,-100,100), substr($chunk,-100,100), "body footer $t::TestUtils::HTTP_VER";
         },
         app => sub {
             my $env = shift;
@@ -66,7 +56,7 @@ sub test_bigpost {
     test_bigpost();
 }
 {
-    $HTTP_VER = "1.0";
+    local $t::TestUtils::HTTP_VER = "1.0";
     test_bigpost();
 }
 
