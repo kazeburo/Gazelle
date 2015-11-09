@@ -862,7 +862,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     Plack::Handler::Gazelle::write_psgi_response_header = 1
   PREINIT:
     ssize_t rv;
-    STRLEN len;
+    STRLEN len = 0;
     ssize_t iovcnt;
     ssize_t vec_offset;
     ssize_t written;
@@ -998,7 +998,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
       v[iovcnt].iov_len = sizeof("Connection: close\r\n\r\n") - 1;
       iovcnt++;
 
-      ssize_t chb_offset = 0;
+      size_t chb_offset = 0;
       for (i=0; i < av_len(body) + 1; i++ ) {
         SV **b = av_fetch(body,i,0);
         if (!SvOK(*b)) {
