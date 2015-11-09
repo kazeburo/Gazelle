@@ -35,6 +35,7 @@ sub test_bigpost {
             is $res->message, 'OK';
             is $res->header('Client-Content-Length'), length $chunk;
             is length $res->content, length $chunk;
+            is $res->header('Client-Header-Content-MD5'), Digest::MD5::md5_hex(substr($chunk,0,100)), "header md $HTTP_VER";
             is Digest::MD5::md5_hex($res->content), Digest::MD5::md5_hex($chunk), "md5 $HTTP_VER";
             is substr($res->content,0,100), substr($chunk,0,100), "body header $HTTP_VER";
             is substr($res->content,-100,100), substr($chunk,-100,100), "body footer $HTTP_VER";
@@ -54,6 +55,7 @@ sub test_bigpost {
                 [ 'Content-Type' => 'text/plain',
                   'Client-Content-Length' => $env->{CONTENT_LENGTH},
                   'Client-Content-Type' => $env->{CONTENT_TYPE},
+                  'Client-Header-Content-MD5' => Digest::MD5::md5_hex(substr($body,0,100)),
               ],
                 [ $body ],
             ];
