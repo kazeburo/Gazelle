@@ -14,7 +14,7 @@ __END__
 
 =head1 NAME
 
-Gazelle - Preforked Plack Handler for performance freaks
+Gazelle - a Preforked Plack Handler for performance freaks
 
 =head1 SYNOPSIS
 
@@ -23,34 +23,36 @@ Gazelle - Preforked Plack Handler for performance freaks
 
 =head1 DESCRIPTION
 
-Gazelle is a PSGI Handler. It's created based on L<Starlet> code. 
-Many code was rewritten and optimized by XS.
+Gazelle is a PSGI Handler. It is derivied from L<Starlet>.
+A lot of its code was rewritten or optimized by converting it to XS code.
 
-Gazelle supports following features.
+Gazelle supports following features:
 
 =over
 
-=item * supports HTTP/1.1. But does not have Keepalive.
+=item * Supports HTTP/1.1. (Without Keepalive support.)
 
-=item * ultra fast HTTP processing using picohttpparser
+=item * Ultra fast HTTP processing using picohttpparser.
 
-=item * uses accept4(2) if OS support
+=item * Uses accept4(2) if the operating system supports it.
 
-=item * uses writev(2) for output responses
+=item * Uses writev(2) for output responses.
 
-=item * prefork and graceful shutdown using Parallel::Prefork
+=item * Prefork and graceful shutdown using Parallel::Prefork.
 
-=item * hot deploy and unix domain socket using Server::Starter
+=item * Hot deploy and unix domain socket using Server::Starter.
 
 =back
 
-Gazelle is suitable for running HTTP application servers behind a reverse proxy like nginx.
+Gazelle is suitable for running HTTP application servers behind a reverse proxy
+such as nginx.
 
-Benchmark is here. L<https://github.com/kazeburo/Gazelle/wiki/Benchmark>
+One can find a Benchmark here:
+L<https://github.com/kazeburo/Gazelle/wiki/Benchmark> .
 
 =head1 SAMPLE CONFIGURATION WITH NGINX
 
-nginx.conf
+nginx.conf:
 
   http {
     upstream app {
@@ -75,27 +77,36 @@ start_server is bundled with L<Server::Starter>
 
 =head1 COMMAND LINE OPTIONS
 
-In addition to the options supported by plackup, Gazelle accepts following options(s).
+In addition to the options supported by plackup, Gazelle accepts the
+following options:
 
 =head2 --max-workers=#
 
-number of worker processes (default: 10)
+Number of worker processes (default: 10).
 
 =head2 --timeout=#
 
-seconds until timeout (default: 300)
+Seconds until timeout (default: 300).
 
 =head2 --max-reqs-per-child=#
 
-max. number of requests to be handled before a worker process exits (default: 1000)
+Maximal number of requests to be handled before a worker process exits
+(default: 1000).
 
 =head2 --min-reqs-per-child=#
 
-if set, randomizes the number of requests handled by a single worker process between the value and that supplied by C<--max-reqs-per-child> (default: none)
+If set, randomize the number of requests handled by a single worker process
+between this value and the one supplied by C<--max-reqs-per-child> (default:
+none).
 
 =head2 --spawn-interval=#
 
-if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See L<http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html> for more information. (default: none)
+If set, worker processes will not be spawned more than once than every number
+of seconds given in the parameter.  Furthermore, when a SIGHUP is being
+received, no more than one worker processes will be collected during this
+interval.  This feature is useful for doing a "slow-restart".  See
+L<http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html> for
+more information. (default: none)
 
 =head1 SEE ALSO
 
@@ -104,7 +115,7 @@ L<Parallel::Prefork>
 L<Server::Starter>
 L<https://github.com/h2o/picohttpparser>
 
-=head1 LICENSE of Starlet 
+=head1 LICENSE of Starlet
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 
