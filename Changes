@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.41 2016-02-17T01:28:18Z
+
+ - requires Parallel::Prefork 0.18
+
 0.40 2015-11-09T17:18:25Z
 
  - fix null character in read body. shortage buffer
