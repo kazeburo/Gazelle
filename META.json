@@ -44,7 +44,7 @@
       "runtime" : {
          "requires" : {
             "Guard" : "0",
-            "Parallel::Prefork" : "0.17",
+            "Parallel::Prefork" : "0.18",
             "Plack" : "1.0037",
             "Server::Starter" : "0",
             "Stream::Buffered" : "0",
