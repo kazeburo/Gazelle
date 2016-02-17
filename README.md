@@ -1,6 +1,6 @@
 # NAME
 
-Gazelle - Preforked Plack Handler for performance freaks
+Gazelle - a Preforked Plack Handler for performance freaks
 
 # SYNOPSIS
 
@@ -9,25 +9,27 @@ Gazelle - Preforked Plack Handler for performance freaks
 
 # DESCRIPTION
 
-Gazelle is a PSGI Handler. It's created based on [Starlet](https://metacpan.org/pod/Starlet) code. 
-Many code was rewritten and optimized by XS.
+Gazelle is a PSGI Handler. It is derivied from [Starlet](https://metacpan.org/pod/Starlet).
+A lot of its code was rewritten or optimized by converting it to XS code.
 
-Gazelle supports following features.
+Gazelle supports following features:
 
-- supports HTTP/1.1. But does not have Keepalive.
-- ultra fast HTTP processing using picohttpparser
-- uses accept4(2) if OS support
-- uses writev(2) for output responses
-- prefork and graceful shutdown using Parallel::Prefork
-- hot deploy and unix domain socket using Server::Starter
+- Supports HTTP/1.1. (Without Keepalive support.)
+- Ultra fast HTTP processing using picohttpparser.
+- Uses accept4(2) if the operating system supports it.
+- Uses writev(2) for output responses.
+- Prefork and graceful shutdown using Parallel::Prefork.
+- Hot deploy and unix domain socket using Server::Starter.
 
-Gazelle is suitable for running HTTP application servers behind a reverse proxy like nginx.
+Gazelle is suitable for running HTTP application servers behind a reverse proxy
+such as nginx.
 
-Benchmark is here. [https://github.com/kazeburo/Gazelle/wiki/Benchmark](https://github.com/kazeburo/Gazelle/wiki/Benchmark)
+One can find a Benchmark here:
+[https://github.com/kazeburo/Gazelle/wiki/Benchmark](https://github.com/kazeburo/Gazelle/wiki/Benchmark) .
 
 # SAMPLE CONFIGURATION WITH NGINX
 
-nginx.conf
+nginx.conf:
 
     http {
       upstream app {
@@ -52,27 +54,36 @@ start\_server is bundled with [Server::Starter](https://metacpan.org/pod/Server:
 
 # COMMAND LINE OPTIONS
 
-In addition to the options supported by plackup, Gazelle accepts following options(s).
+In addition to the options supported by plackup, Gazelle accepts the
+following options:
 
 ## --max-workers=#
 
-number of worker processes (default: 10)
+Number of worker processes (default: 10).
 
 ## --timeout=#
 
-seconds until timeout (default: 300)
+Seconds until timeout (default: 300).
 
 ## --max-reqs-per-child=#
 
-max. number of requests to be handled before a worker process exits (default: 1000)
+Maximal number of requests to be handled before a worker process exits
+(default: 1000).
 
 ## --min-reqs-per-child=#
 
-if set, randomizes the number of requests handled by a single worker process between the value and that supplied by `--max-reqs-per-child` (default: none)
+If set, randomize the number of requests handled by a single worker process
+between this value and the one supplied by `--max-reqs-per-child` (default:
+none).
 
 ## --spawn-interval=#
 
-if set, worker processes will not be spawned more than once than every given seconds.  Also, when SIGHUP is being received, no more than one worker processes will be collected every given seconds.  This feature is useful for doing a "slow-restart".  See [http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html](http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html) for more information. (default: none)
+If set, worker processes will not be spawned more than once than every number
+of seconds given in the parameter.  Furthermore, when a SIGHUP is being
+received, no more than one worker processes will be collected during this
+interval.  This feature is useful for doing a "slow-restart".  See
+[http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html](http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html) for
+more information. (default: none)
 
 # SEE ALSO
 
@@ -81,7 +92,7 @@ if set, worker processes will not be spawned more than once than every given sec
 [Server::Starter](https://metacpan.org/pod/Server::Starter)
 [https://github.com/h2o/picohttpparser](https://github.com/h2o/picohttpparser)
 
-# LICENSE of Starlet 
+# LICENSE of Starlet
 
 This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.
 

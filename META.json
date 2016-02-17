@@ -1,10 +1,10 @@
 {
-   "abstract" : "Preforked Plack Handler for performance freaks",
+   "abstract" : "a Preforked Plack Handler for performance freaks",
    "author" : [
       "Masahiro Nagano <kazeburo@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v2.4.1, CPAN::Meta::Converter version 2.141170",
+   "generated_by" : "Minilla/v2.4.1, CPAN::Meta::Converter version 2.150005",
    "license" : [
       "perl_5"
    ],
@@ -83,6 +83,9 @@
       "Arthur Axel 'fREW' Schmidt <frioux@gmail.com>",
       "Syohei YOSHIDA <syohex@gmail.com>",
       "Alex Hunsaker <badalex@gmail.com>",
-      "Ichinose Shogo <shogo82148@gmail.com>"
-   ]
+      "Ichinose Shogo <shogo82148@gmail.com>",
+      "Shlomi Fish <shlomif@shlomifish.org>",
+      "meru_akimbo <merukatoruayu0@gmail.com>"
+   ],
+   "x_serialization_backend" : "JSON::PP version 2.27203"
 }
