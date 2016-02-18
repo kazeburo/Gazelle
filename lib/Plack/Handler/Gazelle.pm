@@ -103,7 +103,6 @@ sub run {
     my %pm_args = (
         max_workers => $self->{max_workers},
         trap_signals => {
-            TERM => 'TERM',
             HUP  => 'TERM',
         },
     );
@@ -115,6 +114,14 @@ sub run {
         $pm_args{err_respawn_interval} = $self->{err_respawn_interval};
     }
     my $pm = Parallel::Prefork->new(\%pm_args);
+
+    local $SIG{TERM} = sub {
+        #tell the socket we're done reading (stops new connections, existing will continue)
+        $self->{listen_sock}->shutdown(0);
+
+        $pm->signal_received('TERM');
+        $pm->signal_all_children('TERM');
+    };
     while ($pm->signal_received !~ /^(TERM|USR1)$/) {
         $pm->start(sub{
             srand((rand() * 2 ** 30) ^ $$ ^ time);
