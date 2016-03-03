@@ -781,7 +781,7 @@ write_chunk(fileno, buf, offset, timeout)
         count = (remain > IOV_MAX) ? IOV_MAX : remain;
         rv = _writev_timeout(fileno, timeout,  &v[vec_offset], count, (vec_offset == 0) ? 0 : 1);
         if ( rv <= 0 ) {
-          warn("failed to writev");
+          warn("failed to writev: %zd", rv);
           // error or disconnected
           break;
         }
