@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.42 2016-03-18T00:16:33Z
+
+ - logging errno and rv of writev
+
 0.41 2016-02-17T01:28:18Z
 
  - requires Parallel::Prefork 0.18
