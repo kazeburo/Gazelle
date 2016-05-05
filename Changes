@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.43 2016-05-05T14:32:02Z
+
+ - fixed testutils for HTTP::Tiny 0.058
+
 0.42 2016-03-18T00:16:33Z
 
  - logging errno and rv of writev
