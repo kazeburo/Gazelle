@@ -75,7 +75,7 @@
          "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
-   "version" : "0.43",
+   "version" : "0.44",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "mattn <mattn.jp@gmail.com>",
@@ -86,7 +86,8 @@
       "Ichinose Shogo <shogo82148@gmail.com>",
       "Shlomi Fish <shlomif@shlomifish.org>",
       "meru_akimbo <merukatoruayu0@gmail.com>",
-      "karupanerura <karupa@cpan.org>"
+      "karupanerura <karupa@cpan.org>",
+      "Mark Ellis <mark.ellis@cartridgesave.co.uk>"
    ],
    "x_serialization_backend" : "JSON::PP version 2.27203"
 }
