@@ -50,6 +50,11 @@ sub new {
             if defined $args{$_};
     }
 
+    if ($args{child_exit}) {
+        $args{child_exit} = eval $args{child_exit} unless ref($args{child_exit});
+        die "child_exit is defined but not a code block" if ref($args{child_exit}) ne 'CODE';
+    }
+
     my $self = bless {
         server_software      => $args{server_software} || $class,
         server_ready         => $args{server_ready} || sub {},
@@ -58,6 +63,7 @@ sub new {
         port                 => $args{port} || 8080,
         timeout              => $args{timeout} || 300,
         max_workers          => $max_workers,
+        child_exit           => $args{child_exit} || sub {},
         min_reqs_per_child   => (
             defined $args{min_reqs_per_child}
             ? $args{min_reqs_per_child} : undef,
@@ -139,7 +145,10 @@ sub run {
             local $SIG{PIPE} = 'IGNORE';
         PROC_LOOP:
             while ( $proc_req_count < $max_reqs_per_child) {
-                exit 0 if $self->{term_received};
+                if ( $self->{term_received} ) {
+                    $self->{child_exit}->($self, $app);
+                    exit 0;
+                }
                 if ( my ($conn, $buf, $env) = accept_psgi(
                     fileno($self->{listen_sock}), $self->{timeout}, $self->{_listen_sock_is_tcp},
                     $self->{host} || 0, $self->{port} || 0
@@ -213,6 +222,7 @@ sub run {
                         die "Bad response $res";
                     }
                     if ($env->{'psgix.harakiri.commit'}) {
+                        $self->{child_exit}->($self, $app);
                         exit 0;
                     }
                 }
