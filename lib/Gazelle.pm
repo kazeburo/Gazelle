@@ -108,6 +108,10 @@ interval.  This feature is useful for doing a "slow-restart".  See
 L<http://blog.kazuhooku.com/2011/04/web-serverstarter-parallelprefork.html> for
 more information. (default: none)
 
+=head2 --child-exit=s
+
+the subroutine code to be executed right before a child process exits. e.g. C<--child-exit='sub { POSIX::_exit(0) }'>. (default: none)
+
 =head1 SEE ALSO
 
 L<Starlet>
