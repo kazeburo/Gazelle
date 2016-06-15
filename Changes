@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.45 2016-06-15T13:19:53Z
+
+ - introduced --child-exit inspired by Starlet
+
 0.44 2016-06-06T15:20:06Z
 
  - Changed SIGTERM handling in the parent to shutdown the socket
