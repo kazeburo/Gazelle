@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.46 2016-07-05T06:41:37Z
+
+ - do not shutdown if server_starter was used (Thank you zhanghjster)
+
 0.45 2016-06-15T13:19:53Z
 
  - introduced --child-exit inspired by Starlet
