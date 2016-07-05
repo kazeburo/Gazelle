@@ -123,7 +123,8 @@ sub run {
 
     local $SIG{TERM} = sub {
         #tell the socket we're done reading (stops new connections, existing will continue)
-        $self->{listen_sock}->shutdown(0);
+        $self->{listen_sock}->shutdown(0)
+          if not defined $ENV{SERVER_STARTER_PORT};
 
         $pm->signal_received('TERM');
         $pm->signal_all_children('TERM');
