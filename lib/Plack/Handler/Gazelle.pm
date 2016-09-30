@@ -28,8 +28,11 @@ sub new {
     my($class, %args) = @_;
 
     # setup before instantiation
-    my $listen_sock;
-    if (defined $ENV{SERVER_STARTER_PORT}) {
+    if ($args{listen_sock}) {
+        $args{host} = $args{listen_sock}->sockhost;
+        $args{port} = $args{listen_sock}->sockport;
+    }
+    elsif (defined $ENV{SERVER_STARTER_PORT}) {
         my ($hostport, $fd) = %{Server::Starter::server_ports()};
         if ($hostport =~ /(.*):(\d+)/) {
             $args{host} = $1;
@@ -37,10 +40,10 @@ sub new {
         } else {
             $args{port} = $hostport;
         }
-        $listen_sock = IO::Socket::INET->new(
+        $args{listen_sock} = IO::Socket::INET->new(
             Proto => 'tcp',
         ) or die "failed to create socket:$!";
-        $listen_sock->fdopen($fd, 'w')
+        $args{listen_sock}->fdopen($fd, 'w')
             or die "failed to bind to listening socket:$!";
     }
 
@@ -58,7 +61,7 @@ sub new {
     my $self = bless {
         server_software      => $args{server_software} || $class,
         server_ready         => $args{server_ready} || sub {},
-        listen_sock          => $listen_sock,
+        listen_sock          => $args{listen_sock},
         host                 => $args{host} || 0,
         port                 => $args{port} || 8080,
         timeout              => $args{timeout} || 300,
