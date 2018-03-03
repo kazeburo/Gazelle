@@ -89,6 +89,21 @@ more information. (default: none)
 
 the subroutine code to be executed right before a child process exits. e.g. `--child-exit='sub { POSIX::_exit(0) }'`. (default: none)
 
+# Extensions to PSGI
+
+## psgix.informational
+Gazelle exposes a callback named `psgix.informational` that can be used for sending an informational response.
+The callback accepts two arguments, the first argument being the status code and the second being an arrayref of the headers to be sent.
+Example below sends an 103 response before processing the request to build a final response.
+  sub {
+      my $env = shift;
+      $env\["psgix.informational"}->(103, \[
+        'link' => '&lt;/style.css>; rel=preload'
+      \]);
+      my $resp = ... application logic ...
+      $resp;
+  }
+
 # SEE ALSO
 
 [Starlet](https://metacpan.org/pod/Starlet)
