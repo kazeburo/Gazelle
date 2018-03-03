@@ -9,16 +9,45 @@ use strict;
 use warnings;
 use utf8;
 
+BEGIN { push @INC, '.' }
 use builder::MyBuilder;
 use File::Basename;
 use File::Spec;
 
 my %args = (
-    license              => 'perl',
+    license              => 'perl_5',
     dynamic_config       => 0,
 
     configure_requires => {
-        'Module::Build' => 0.38,
+        'Module::Build' => '0.4005',
+    },
+
+    requires => {
+        'Guard' => '0',
+        'Parallel::Prefork' => '0.18',
+        'Plack' => '1.0037',
+        'Server::Starter' => '0',
+        'Stream::Buffered' => '0',
+        'Try::Tiny' => '0',
+        'perl' => '5.008001',
+    },
+
+    recommends => {
+    },
+
+    suggests => {
+    },
+
+    build_requires => {
+    },
+
+    test_requires => {
+        'HTTP::Request::Common' => '0',
+        'HTTP::Tiny' => '0.058',
+        'Plack::Test' => '0',
+        'Plack::Test::Suite' => '0',
+        'Test::More' => '0.98',
+        'Test::TCP' => '2',
     },
 
     name            => 'Gazelle',
@@ -50,16 +79,4 @@ my $builder = builder::MyBuilder->subclass(
     }
 )->new(%args);
 $builder->create_build_script();
-
-use File::Copy;
-
-print "cp META.json MYMETA.json\n";
-copy("META.json","MYMETA.json") or die "Copy failed(META.json): $!";
-
-if (-f 'META.yml') {
-    print "cp META.yml MYMETA.yml\n";
-    copy("META.yml","MYMETA.yml") or die "Copy failed(META.yml): $!";
-} else {
-    print "There is no META.yml... You may install this module from the repository...\n";
-}
 

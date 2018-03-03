@@ -4,7 +4,7 @@
       "Masahiro Nagano <kazeburo@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v2.4.1, CPAN::Meta::Converter version 2.150005",
+   "generated_by" : "Minilla/v3.0.16, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
@@ -29,7 +29,7 @@
       "configure" : {
          "requires" : {
             "Devel::CheckCompiler" : "0.04",
-            "Module::Build" : "0.38"
+            "Module::Build" : "0.4005"
          }
       },
       "develop" : {
@@ -78,16 +78,17 @@
    "version" : "0.46",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
-      "mattn <mattn.jp@gmail.com>",
-      "bayashi <bayashi@cpan.org>",
-      "Arthur Axel 'fREW' Schmidt <frioux@gmail.com>",
-      "Syohei YOSHIDA <syohex@gmail.com>",
       "Alex Hunsaker <badalex@gmail.com>",
+      "Arthur Axel 'fREW' Schmidt <frioux@gmail.com>",
+      "Dagfinn Ilmari Mannsåker <ilmari@ilmari.org>",
       "Ichinose Shogo <shogo82148@gmail.com>",
+      "Mark Ellis <mark.ellis@cartridgesave.co.uk>",
       "Shlomi Fish <shlomif@shlomifish.org>",
-      "meru_akimbo <merukatoruayu0@gmail.com>",
+      "Syohei YOSHIDA <syohex@gmail.com>",
+      "bayashi <bayashi@cpan.org>",
       "karupanerura <karupa@cpan.org>",
-      "Mark Ellis <mark.ellis@cartridgesave.co.uk>"
+      "mattn <mattn.jp@gmail.com>",
+      "meru_akimbo <merukatoruayu0@gmail.com>"
    ],
-   "x_serialization_backend" : "JSON::PP version 2.27203"
+   "x_serialization_backend" : "JSON::PP version 2.27400_02"
 }

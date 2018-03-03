@@ -214,6 +214,10 @@ sub run {
                     } else {
                         $env->{'psgi.input'} = $null_io;
                     }
+                    $env->{'psgix.informational'} = sub {
+                        my ($status,$headers) = @_;
+                        write_informational_response($conn, $self->{timeout}, $status, $headers);
+                    };
                     $res = Plack::Util::run_app $app, $env;
                     my $use_chunked = $env->{"SERVER_PROTOCOL"} eq 'HTTP/1.1' ? 1 : 0;
                     if (ref $res eq 'ARRAY') {
@@ -295,5 +299,3 @@ sub _handle_response {
 }
 
 1;
-
-

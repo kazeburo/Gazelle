@@ -439,7 +439,7 @@ _write_timeout(const int fileno, const double timeout, char * write_buf, const i
 
 STATIC_INLINE
 void
-str_s(char * dst, int *dst_len, const char * src, int src_len) {
+str_s(char * dst, size_t *dst_len, const char * src, int src_len) {
   int i;
   int dlen = *dst_len;
   for ( i=0; i<src_len; i++) {
@@ -451,7 +451,7 @@ str_s(char * dst, int *dst_len, const char * src, int src_len) {
 
 STATIC_INLINE
 void
-str_i(char * dst, int * dst_len, int src, int fig) {
+str_i(char * dst, size_t * dst_len, int src, int fig) {
   int dlen = *dst_len + fig - 1;
   do {
     dst[dlen] = '0' + (src % 10);
@@ -466,7 +466,7 @@ STATIC_INLINE
 int _date_line(char * date_line) {
     struct tm gtm;
     time_t lt;
-    int i = 0;
+    size_t i = 0;
     time(&lt);
     gmtime_r(&lt, &gtm);
     date_line[i++] = 'D';
@@ -543,7 +543,7 @@ BOOT:
     (void)hv_stores(e,"psgi.nonblocking",     newSV(0));
     (void)hv_stores(e,"psgix.input.buffered", newSViv(1));
     (void)hv_stores(e,"psgix.harakiri",       newSViv(1));
- 
+
     /* stolenn from Feersum */
     /* placeholders that get defined for every request */
     (void)hv_stores(e, "SERVER_PROTOCOL", &PL_sv_undef);
@@ -850,6 +850,111 @@ close_client(fileno)
     close(fileno);
 
 unsigned long
+write_informational_response(fileno, timeout, status_code, headers)
+    int fileno
+    double timeout
+    int status_code
+    AV * headers
+  PREINIT:
+    ssize_t rv;
+    ssize_t iovcnt;
+    ssize_t vec_offset;
+    ssize_t written;
+    int count;
+    int remain;
+    size_t i;
+    struct iovec * iv;
+    char status_line[512];
+    char * key;
+    char * val;
+    STRLEN key_len = 0;
+    STRLEN val_len = 0;
+  CODE:
+    if( (av_len(headers)+1) % 2 == 1 ) croak("ERROR: Odd number of element in header");
+    iovcnt = 10 + (av_len(headers)+2)*2;
+    {
+      struct iovec iv[iovcnt]; // Needs C99 compiler
+      /* status line */
+      iovcnt = 0;
+      i=0;
+      status_line[i++] = 'H';
+      status_line[i++] = 'T';
+      status_line[i++] = 'T';
+      status_line[i++] = 'P';
+      status_line[i++] = '/';
+      status_line[i++] = '1';
+      status_line[i++] = '.';
+      status_line[i++] = '1';
+      status_line[i++] = ' ';
+      str_i(status_line,&i,status_code,3);
+      status_line[i++] = ' ';
+      const char * message = status_message(status_code);
+      str_s(status_line,&i, message, strlen(message));
+      status_line[i++] = 13;
+      status_line[i++] = 10;
+      iv[iovcnt].iov_base = status_line;
+      iv[iovcnt].iov_len = i;
+      iovcnt++;
+
+      i=0;
+      while (i < av_len(headers) + 1 ) {
+        /* key */
+        key = svpv2char(aTHX_ *av_fetch(headers,i,0), &key_len);
+        i++;
+        val = svpv2char(aTHX_ *av_fetch(headers,i,0), &val_len);
+        i++;
+        iv[iovcnt].iov_base = key;
+        iv[iovcnt].iov_len = key_len;
+        iovcnt++;
+        iv[iovcnt].iov_base = ": ";
+        iv[iovcnt].iov_len = sizeof(": ") - 1;
+        iovcnt++;
+        /* value */
+        iv[iovcnt].iov_base = val;
+        iv[iovcnt].iov_len = val_len;
+        iovcnt++;
+        iv[iovcnt].iov_base = "\r\n";
+        iv[iovcnt].iov_len = sizeof("\r\n") - 1;
+        iovcnt++;
+      }
+      iv[iovcnt].iov_base = "\r\n";
+      iv[iovcnt].iov_len = sizeof("\r\n") - 1;
+      iovcnt++;
+
+      vec_offset = 0;
+      written = 0;
+      remain = iovcnt;
+      while ( remain > 0 ) {
+        count = (remain > IOV_MAX) ? IOV_MAX : remain;
+        rv = _writev_timeout(fileno, timeout,  &iv[vec_offset], count, (vec_offset == 0) ? 0 : 1);
+        if ( rv <= 0 ) {
+          warn("failed to writev: %zd errno:%d", rv, errno);
+          // error or disconnected
+          break;
+        }
+        written += rv;
+        while ( rv > 0 ) {
+          if ( (unsigned int)rv >= iv[vec_offset].iov_len ) {
+            rv -= iv[vec_offset].iov_len;
+            vec_offset++;
+            remain--;
+          }
+          else {
+            iv[vec_offset].iov_base = (char*)iv[vec_offset].iov_base + rv;
+            iv[vec_offset].iov_len -= rv;
+            rv = 0;
+          }
+        }
+      }
+    }
+
+    if (rv < 0) XSRETURN_UNDEF;
+    RETVAL = (unsigned long) written;
+  OUTPUT:
+    RETVAL
+
+
+unsigned long
 write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     int fileno
     double timeout
@@ -862,19 +967,19 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     Plack::Handler::Gazelle::write_psgi_response_header = 1
   PREINIT:
     ssize_t rv;
-    STRLEN len = 0;
     ssize_t iovcnt;
     ssize_t vec_offset;
     ssize_t written;
     int count;
     int remain;
-    int i;
+    size_t i;
     struct iovec * v;
     char status_line[512];
     char date_line[512];
     char server_line[1032];
     char * key;
     char * val;
+    STRLEN key_len = 0;
     STRLEN val_len;
     int date_pushed = 0;
     const char * s;
@@ -886,7 +991,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
   CODE:
     if( (av_len(headers)+1) % 2 == 1 ) croak("ERROR: Odd number of element in header");
     use_chunked = SvIV(use_chunkedv);
-    iovcnt = 10 + (av_len(headers)+1)*2 + (av_len(body) + 1);
+    iovcnt = 10 + (av_len(headers)+2)*2 + (av_len(body) + 1);
 
     /* status_with_no_entity_body */
     if ( status_code < 200 || status_code == 204 || status_code == 304 ) {
@@ -933,9 +1038,9 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
       date_pushed = 0;
       while ( i < av_len(headers) + 1 ) {
         /* key */
-        key = svpv2char(aTHX_ *av_fetch(headers,i,0), &len);
+        key = svpv2char(aTHX_ *av_fetch(headers,i,0), &key_len);
         i++;
-        if ( strncasecmp(key,"Connection",len) == 0 ) {
+        if ( strncasecmp(key,"Connection",key_len) == 0 ) {
           i++;
           continue;
         }
@@ -943,7 +1048,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
         val = svpv2char(aTHX_ *av_fetch(headers,i,0), &val_len);
         i++;
 
-        if ( strncasecmp(key,"Date",len) == 0 ) {
+        if ( strncasecmp(key,"Date",key_len) == 0 ) {
           strcpy(date_line, "Date: ");
           for ( s=val, n = val_len, d=date_line+sizeof("Date: ")-1; n !=0; s++, --n, d++) {
             *d = *s;
@@ -954,7 +1059,7 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
           v[1].iov_len = sizeof("Date: ") -1 + val_len + 2;
           date_pushed = 1;
           continue;
-        } else if ( strncasecmp(key,"Server",len) == 0 ) {
+        } else if ( strncasecmp(key,"Server",key_len) == 0 ) {
           strcpy(server_line, "Server: ");
           for ( s=val, n = val_len, d=server_line+sizeof("Server: ")-1; n !=0; s++, --n, d++) {
             *d = *s;
@@ -964,12 +1069,12 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
           v[2].iov_base = server_line;
           v[2].iov_len = sizeof("Server: ") -1 + val_len + 2;
           continue;
-        } else if ( strncasecmp(key,"Content-Length",len) == 0 || strncasecmp(key,"Transfer-Encoding",len) == 0) {
+        } else if ( strncasecmp(key,"Content-Length",key_len) == 0 || strncasecmp(key,"Transfer-Encoding",key_len) == 0) {
             use_chunked = 0;
         }
 
         v[iovcnt].iov_base = key;
-        v[iovcnt].iov_len = len;
+        v[iovcnt].iov_len = key_len;
         iovcnt++;
         v[iovcnt].iov_base = ": ";
         v[iovcnt].iov_len = sizeof(": ") - 1;
@@ -1004,18 +1109,18 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
         if (!SvOK(*b)) {
           continue;
         }
-        d = svpv2char(aTHX_ *b, &len);
-        if ( len < 1 ) {
+        d = svpv2char(aTHX_ *b, &val_len);
+        if ( val_len < 1 ) {
           continue;
         }
         if ( use_chunked ) {
-          v[iovcnt].iov_len = _chunked_header(&chunked_header_buf[chb_offset],len);
+          v[iovcnt].iov_len = _chunked_header(&chunked_header_buf[chb_offset],val_len);
           v[iovcnt].iov_base = &chunked_header_buf[chb_offset];
           chb_offset += v[iovcnt].iov_len;
           iovcnt++;
         }
         v[iovcnt].iov_base = d;
-        v[iovcnt].iov_len = len;
+        v[iovcnt].iov_len = val_len;
         iovcnt++;
         if ( use_chunked ) {
           v[iovcnt].iov_base = "\r\n";
@@ -1062,4 +1167,3 @@ write_psgi_response(fileno, timeout, status_code, headers, body, use_chunkedv)
     RETVAL = (unsigned long) written;
   OUTPUT:
     RETVAL
-
