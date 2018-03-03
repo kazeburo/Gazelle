@@ -1,6 +1,7 @@
 name = "Gazelle"
 # badges = ["travis"]
 authority="cpan:KAZEBURO"
+module_maker="ModuleBuild"
 
 [build]
 build_class = "builder::MyBuilder"

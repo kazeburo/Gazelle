@@ -29,3 +29,4 @@ MYMETA.*
 
 /Gazelle-*
 temp/
+app.psgi

@@ -13,7 +13,7 @@ use Server::Starter ();
 use Try::Tiny;
 use Guard;
 
-our $VERSION = "0.46";
+our $VERSION = "0.47";
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);

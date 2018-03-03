@@ -75,7 +75,7 @@
          "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
-   "version" : "0.46",
+   "version" : "0.47",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "Alex Hunsaker <badalex@gmail.com>",
