@@ -28,7 +28,6 @@ my %args = (
         'Plack' => '1.0037',
         'Server::Starter' => '0',
         'Stream::Buffered' => '0',
-        'Try::Tiny' => '0',
         'perl' => '5.008001',
     },
 

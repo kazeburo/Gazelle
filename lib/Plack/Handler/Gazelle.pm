@@ -10,7 +10,6 @@ use POSIX qw(EINTR EAGAIN EWOULDBLOCK);
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Parallel::Prefork;
 use Server::Starter ();
-use Try::Tiny;
 use Guard;
 
 our $VERSION = "0.47";

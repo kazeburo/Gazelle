@@ -4,7 +4,6 @@ requires 'Plack','1.0037';
 requires 'Stream::Buffered';
 requires 'Parallel::Prefork', '0.18';
 requires 'Server::Starter';
-requires 'Try::Tiny';
 requires 'Guard';
 
 on 'configure' => sub {
