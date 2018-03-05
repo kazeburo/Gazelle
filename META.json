@@ -74,10 +74,11 @@
          "web" : "https://github.com/kazeburo/Gazelle"
       }
    },
-   "version" : "0.47",
+   "version" : "0.48",
    "x_authority" : "cpan:KAZEBURO",
    "x_contributors" : [
       "Alex Hunsaker <badalex@gmail.com>",
+      "Aristotle Pagaltzis <pagaltzis@gmx.de>",
       "Arthur Axel 'fREW' Schmidt <frioux@gmail.com>",
       "Dagfinn Ilmari Mannsåker <ilmari@ilmari.org>",
       "Ichinose Shogo <shogo82148@gmail.com>",
