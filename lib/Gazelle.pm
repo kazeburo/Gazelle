@@ -115,6 +115,7 @@ the subroutine code to be executed right before a child process exits. e.g. C<--
 =head1 Extensions to PSGI
 
 =head2 psgix.informational
+
 Gazelle exposes a callback named C<psgix.informational> that can be used for sending an informational response.
 The callback accepts two arguments, the first argument being the status code and the second being an arrayref of the headers to be sent.
 Example below sends an 103 response before processing the request to build a final response.
