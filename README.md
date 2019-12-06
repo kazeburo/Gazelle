@@ -50,7 +50,7 @@ command line of running Gazelle
     $ start_server --path /path/to/app.sock --backlog 16384 -- plackup -s Gazelle \
       -workers=20 --max-reqs-per-child 1000 --min-reqs-per-child 800 -E production -a app.psgi
 
-start\_server is bundled with [Server::Starter](https://metacpan.org/pod/Server::Starter)
+start\_server is bundled with [Server::Starter](https://metacpan.org/pod/Server%3A%3AStarter)
 
 # COMMAND LINE OPTIONS
 
@@ -92,6 +92,7 @@ the subroutine code to be executed right before a child process exits. e.g. `--c
 # Extensions to PSGI
 
 ## psgix.informational
+
 Gazelle exposes a callback named `psgix.informational` that can be used for sending an informational response.
 The callback accepts two arguments, the first argument being the status code and the second being an arrayref of the headers to be sent.
 Example below sends an 103 response before processing the request to build a final response.
@@ -107,8 +108,8 @@ Example below sends an 103 response before processing the request to build a fin
 # SEE ALSO
 
 [Starlet](https://metacpan.org/pod/Starlet)
-[Parallel::Prefork](https://metacpan.org/pod/Parallel::Prefork)
-[Server::Starter](https://metacpan.org/pod/Server::Starter)
+[Parallel::Prefork](https://metacpan.org/pod/Parallel%3A%3APrefork)
+[Server::Starter](https://metacpan.org/pod/Server%3A%3AStarter)
 [https://github.com/h2o/picohttpparser](https://github.com/h2o/picohttpparser)
 
 # LICENSE of Starlet
