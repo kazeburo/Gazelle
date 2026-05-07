@@ -238,6 +238,9 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   SV* last_value;
   char tmp[MAX_HEADER_NAME_LEN + sizeof("HTTP_") - 1];
 
+  int seen_content_length = 0;
+  int seen_transfer_encoding = 0;
+
   ret = phr_parse_request(
     buf, buf_len,
     &method, &method_len,
@@ -271,8 +274,6 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   (void)hv_stores(env, "QUERY_STRING", newSVpvn(path + question_at, path_len - question_at));
 
   last_value = NULL;
-  int seen_content_length = 0;
-  int seen_transfer_encoding = 0;
   for (i = 0; i < num_headers; ++i) {
     if (headers[i].name != NULL) {
       const char* name;
