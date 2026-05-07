@@ -1,0 +1,30 @@
+name: test
+
+on:
+  push:
+    branches:
+      - "**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl: [ "5.38", "5.36", "5.34" ]
+    name: Perl ${{ matrix.perl }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd #v6
+
+      - name: Setup Perl
+        uses: shogo82148/actions-setup-perl@9f8c263975569ff3b4e510cb1f8813115749e146 #v1
+        with:
+          perl-version: ${{ matrix.perl }}
+
+      - name: Install Minilla
+        run: |
+          cpanm -n Minilla
+
+      - name: Install Dependencies and Test
+        run: |
+          minil test
