@@ -161,26 +161,13 @@ sub run {
 
                     my $res = $bad_response;
                     my $chunked = do { no warnings; lc delete $env->{HTTP_TRANSFER_ENCODING} eq 'chunked' };
-                    if (my $cl = $env->{CONTENT_LENGTH}) {
-                        my $buffer = Stream::Buffered->new($cl);
-                        while ($cl > 0) {
-                            my $chunk = "";
-                            if (length $buf) {
-                                $chunk = $buf;
-                                $buf = '';
-                            } else {
-                                read_timeout(
-                                    $conn, \$chunk, $cl, 0, $self->{timeout})
-                                    or next PROC_LOOP;
-                            }
-                            $buffer->print($chunk);
-                            $cl -= length $chunk;
-                        }
-                        $env->{'psgi.input'} = $buffer->rewind;
-                    } elsif ( $chunked ) {
-                        my $buffer = Stream::Buffered->new($cl);
+                    # RFC 7230 §3.3.3: Transfer-Encoding takes precedence over
+                    # Content-Length. Requests carrying both are rejected upstream
+                    # in the XS layer; this ordering is defence-in-depth.
+                    if ( $chunked ) {
+                        my $buffer = Stream::Buffered->new;
                         my $chunk_buffer = '';
-                        my $length;
+                        my $length = 0;
                     DECHUNK: while(1) {
                             my $chunk = "";
                             if ( length $buf ) {
@@ -209,6 +196,22 @@ sub run {
                             }
                         }
                         $env->{CONTENT_LENGTH} = $length;
+                        $env->{'psgi.input'} = $buffer->rewind;
+                    } elsif (my $cl = $env->{CONTENT_LENGTH}) {
+                        my $buffer = Stream::Buffered->new($cl);
+                        while ($cl > 0) {
+                            my $chunk = "";
+                            if (length $buf) {
+                                $chunk = $buf;
+                                $buf = '';
+                            } else {
+                                read_timeout(
+                                    $conn, \$chunk, $cl, 0, $self->{timeout})
+                                    or next PROC_LOOP;
+                            }
+                            $buffer->print($chunk);
+                            $cl -= length $chunk;
+                        }
                         $env->{'psgi.input'} = $buffer->rewind;
                     } else {
                         $env->{'psgi.input'} = $null_io;

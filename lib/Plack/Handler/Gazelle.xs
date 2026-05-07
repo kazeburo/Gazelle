@@ -238,6 +238,9 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   SV* last_value;
   char tmp[MAX_HEADER_NAME_LEN + sizeof("HTTP_") - 1];
 
+  int seen_content_length = 0;
+  int seen_transfer_encoding = 0;
+
   ret = phr_parse_request(
     buf, buf_len,
     &method, &method_len,
@@ -280,8 +283,40 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
         name = "CONTENT_TYPE";
         name_len = sizeof("CONTENT_TYPE") - 1;
       } else if (header_is(headers + i, "CONTENT-LENGTH", sizeof("CONTENT-LENGTH") - 1)) {
+        if (seen_content_length) {
+          /* duplicated Content_Length headers is
+           * a potential request-smuggling attack. Reject */
+          ret = -1;
+          goto done;
+        }
+        seen_content_length = 1;
+        if (seen_transfer_encoding) {
+          /* RFC 7230 §3.3.3: Transfer-Encoding overrides Content-Length;
+           * receiving both is a potential request-smuggling attack. Reject.
+           * env will be freed via sv_2mortal in the badexit_clear path. */
+          ret = -1;
+          goto done;
+        }
         name = "CONTENT_LENGTH";
         name_len = sizeof("CONTENT_LENGTH") - 1;
+      } else if (header_is(headers + i, "TRANSFER-ENCODING", sizeof("TRANSFER-ENCODING") - 1)) {
+        if seen_transfer_encoding ) {
+          /* duplicated transfer-encoding headers is
+           * a potential request-smuggling attack. Reject */
+          ret = -1;
+          goto done;
+        }
+        seen_transfer_encoding = 1;
+        if (seen_content_length) {
+          /* RFC 7230 §3.3.3: Transfer-Encoding overrides Content-Length;
+           * receiving both is a potential request-smuggling attack. Reject.
+           * env will be freed via sv_2mortal in the badexit_clear path. */
+          ret = -1;
+          goto done;
+        }
+        name = tmp;
+        strcpy(tmp, "HTTP_TRANSFER_ENCODING");
+        name_len = sizeof("HTTP_TRANSFER_ENCODING") - 1;
       } else {
         const char* s;
         char* d;
