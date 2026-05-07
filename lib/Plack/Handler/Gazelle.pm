@@ -167,7 +167,7 @@ sub run {
                     if ( $chunked ) {
                         my $buffer = Stream::Buffered->new;
                         my $chunk_buffer = '';
-                        my $length;
+                        my $length = 0;
                     DECHUNK: while(1) {
                             my $chunk = "";
                             if ( length $buf ) {
