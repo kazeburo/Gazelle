@@ -271,6 +271,8 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
   (void)hv_stores(env, "QUERY_STRING", newSVpvn(path + question_at, path_len - question_at));
 
   last_value = NULL;
+  int seen_content_length = 0;
+  int seen_transfer_encoding = 0;
   for (i = 0; i < num_headers; ++i) {
     if (headers[i].name != NULL) {
       const char* name;
@@ -280,8 +282,28 @@ _parse_http_request(pTHX_ char *buf, ssize_t buf_len, HV *env) {
         name = "CONTENT_TYPE";
         name_len = sizeof("CONTENT_TYPE") - 1;
       } else if (header_is(headers + i, "CONTENT-LENGTH", sizeof("CONTENT-LENGTH") - 1)) {
+        seen_content_length = 1;
+        if (seen_transfer_encoding) {
+          /* RFC 7230 §3.3.3: Transfer-Encoding overrides Content-Length;
+           * receiving both is a potential request-smuggling attack. Reject.
+           * env will be freed via sv_2mortal in the badexit_clear path. */
+          ret = -1;
+          goto done;
+        }
         name = "CONTENT_LENGTH";
         name_len = sizeof("CONTENT_LENGTH") - 1;
+      } else if (header_is(headers + i, "TRANSFER-ENCODING", sizeof("TRANSFER-ENCODING") - 1)) {
+        seen_transfer_encoding = 1;
+        if (seen_content_length) {
+          /* RFC 7230 §3.3.3: Transfer-Encoding overrides Content-Length;
+           * receiving both is a potential request-smuggling attack. Reject.
+           * env will be freed via sv_2mortal in the badexit_clear path. */
+          ret = -1;
+          goto done;
+        }
+        name = tmp;
+        strcpy(tmp, "HTTP_TRANSFER_ENCODING");
+        name_len = sizeof("HTTP_TRANSFER_ENCODING") - 1;
       } else {
         const char* s;
         char* d;
