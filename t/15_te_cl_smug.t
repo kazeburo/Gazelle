@@ -13,8 +13,9 @@ test_tcp(
         my $port = shift;
 
         my $socket = IO::Socket::INET->new(
-            PeerAddr => "localhost:$port",
+            PeerAddr => "127.0.0.1:$port",
             Proto    => 'tcp',
+            Timeout  => 5,
         ) or die "Failed to connect: $!";
 
         # Chunked body encodes "Hello World" (0xb = 11 bytes).
