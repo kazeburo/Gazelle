@@ -1,0 +1,29 @@
+name: test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl: [ "5.38", "5.36", "5.34" ]
+    name: Perl ${{ matrix.perl }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+
+      - name: Install Minilla
+        run: |
+          cpanm -n Minilla
+
+      - name: Install Dependencies and Test
+        run: |
+          minil test
