@@ -2,7 +2,6 @@ use strict;
 use warnings;
 use Test::TCP;
 use IO::Socket::INET;
-use HTTP::Response;
 use Plack::Loader;
 use Test::More;
 
