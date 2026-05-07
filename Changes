@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.50 2026-05-07T10:33:34Z
+
+ - fix CVE-2026-40562, HTTP Request Smuggling
+
 0.49 2019-12-06T15:34:53Z
 
  - Fix test use port 5000. #28 

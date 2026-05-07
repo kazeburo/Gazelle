@@ -12,7 +12,7 @@ use Parallel::Prefork;
 use Server::Starter ();
 use Guard;
 
-our $VERSION = "0.49";
+our $VERSION = "0.50";
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
