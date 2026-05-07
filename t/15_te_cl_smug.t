@@ -17,8 +17,7 @@ test_tcp(
             Timeout  => 5,
         ) or die "Failed to connect: $!";
 
-        # Chunked body encodes "Hello World" (0xb = 11 bytes).
-        # Content-Length: 5 is intentionally wrong — it must be ignored.
+        # If there is both Transfer-Encoding and Content-Length, the request should be ignored.
         my $chunked_body = "b\r\nHello World\r\n0\r\n\r\n";
         my $req = "POST / HTTP/1.1\r\n"
                 . "Host: localhost\r\n"
@@ -27,7 +26,6 @@ test_tcp(
                 . "\r\n"
                 . $chunked_body;
         $socket->syswrite($req, length $req);
-
         my $resp = "";
         while ($socket->sysread($resp, 65536, length $resp)) {}
         # request should be ignored
