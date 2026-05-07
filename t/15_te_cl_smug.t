@@ -30,7 +30,7 @@ test_tcp(
 
         my $resp = "";
         while ($socket->sysread($resp, 65536, length $resp)) {}
-        # request shuold be ignored
+        # request should be ignored
         is $resp, "";
     },
     server => sub {
