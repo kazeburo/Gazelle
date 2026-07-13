@@ -13,7 +13,10 @@ sub test_psgi {
     my $pid = fork;
     die $! unless defined $pid;
     if ( $pid == 0 ) {
-      Plack::Test::test_psgi(@_);
+      if (ref $_[0] && @_ == 2) {
+         @_ = (app => $_[0], client => $_[1]);
+      }
+      Plack::Test::test_psgi(listen => 1, @_);
       exit;
     }
     wait;
