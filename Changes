@@ -2,6 +2,10 @@ Revision history for Perl extension Gazelle
 
 {{$NEXT}}
 
+0.51 2026-11-05T11:55:42Z
+
+  - fix security issue with parsing malformed chunk-size lines. (Thank you ebihara-san)
+
 0.50 2026-05-07T10:33:34Z
 
  - fix CVE-2026-40562, HTTP Request Smuggling
